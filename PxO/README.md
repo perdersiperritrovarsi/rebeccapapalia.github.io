@@ -164,3 +164,14 @@ la riproduzione e non serve una chiave API. Street View dipende dalla copertura;
 le immagini disponibili possono appartenere a un altro momento.
 Lo zoom usa la cartografia incorporata: non aggiunge nuove tessere o dettaglio
 fotografico alle immagini raster esistenti. La geometria delle strade resta allineata ai percorsi durante zoom e spostamenti.
+
+## Download JPEG della stampa
+
+“Scarica la stampa JPEG” genera la composizione finale completa a 1600×1146 px,
+qualità JPEG 95%, con titolo, serie e attribuzioni cartografiche. Usa i pigmenti,
+la diffusione e le presenze visibili selezionati al momento del clic. Include
+l'intera inquadratura e la dissolvenza ai bordi, senza controlli, schede dei luoghi
+o anelli di selezione. Non dipende dal livello di zoom o dal punto della timeline.
+La posizione temporale e l'eventuale riproduzione vengono ripristinate dopo
+la cattura. Nessun caricamento esterno: il file è creato localmente nel browser.
+L'esportazione si abilita quando tutte le tessere incorporate sono pronte.

@@ -120,6 +120,7 @@ function paperMaterial(g){
  const edge=g.createRadialGradient(W/2,H/2,230,W/2,H/2,610);edge.addColorStop(0,'#72502400');edge.addColorStop(1,'#786f6315');g.fillStyle=edge;g.fillRect(0,0,W,H);
 }
 const cartography=JSON.parse(byId('cartography').textContent);
+let cartographyReady=false;
 function paintBasemap(tiles=[]){
  const g=basemap.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f2f2f2';g.fillRect(0,0,W,H);
  // Feather the original topographic coverage into the wider road network.
@@ -181,7 +182,7 @@ function paintBasemap(tiles=[]){
 paintBasemap();
 Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
  const bitmap=new Image();bitmap.onload=()=>resolve({...tile,bitmap});bitmap.onerror=()=>reject(new Error('Tessera incorporata non leggibile'));bitmap.src=tile.image;
-}))).then(tiles=>{paintBasemap(tiles);byId('map-status').textContent='';render();}).catch(()=>{byId('map-status').textContent=' · Impossibile leggere la base cartografica';});
+}))).then(tiles=>{paintBasemap(tiles);cartographyReady=true;byId('export-jpeg').disabled=false;byId('map-status').textContent='';render();}).catch(()=>{byId('map-status').textContent=' · Impossibile leggere la base cartografica';});
 const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 const maxTime=Math.max(...data.map(t=>t.duration));
 let time=0,showFullMap=false,playing=false,animation=null,last=null,spread=.65,dryIndex=0,dryTime=-Infinity;
@@ -393,6 +394,41 @@ byId('play').onclick=()=>{showFullMap=false;if(!playing&&time>=maxTime){time=0;r
 byId('timeline').max=maxTime;byId('total').textContent=fmt(maxTime);
 byId('timeline').oninput=e=>{showFullMap=false;time=Number(e.target.value);if(maxTime-time<.1)time=maxTime;setPlaying(false);render();};
 byId('all').onclick=()=>{showFullMap=true;time=maxTime;setPlaying(false);render();};
+// Export the complete artwork, independent of zoom, without moving the playhead.
+function finalPrintSnapshot(){
+ const saved={time,showFullMap,playing,view:{...view},selectedTrack,finaleProgress,playLabel:byId('play').textContent};
+ setPlaying(false);stopFinale();
+ try{
+  time=maxTime;showFullMap=true;finaleProgress=1;view.zoom=1;view.x=view.y=0;selectedTrack=null;render();
+  const output=document.createElement('canvas'),top=76,bottom=78;
+  output.width=canvas.width;output.height=canvas.height+top+bottom;
+  const g=output.getContext('2d');g.fillStyle='#f2f2f2';g.fillRect(0,0,output.width,output.height);
+  g.fillStyle='#171717';g.font='italic 30px Georgia,serif';g.fillText('Perdersi, ritrovarsi',32,44);
+  g.font='15px Arial,sans-serif';g.textAlign='right';g.fillText(experience.name,output.width-32,43);g.textAlign='left';
+  g.drawImage(canvas,0,top);
+  g.font='13px Arial,sans-serif';g.fillStyle='#444';
+  g.fillText('Dati e strade © OpenStreetMap contributors (ODbL) · SRTM · Cartografia © OpenTopoMap (CC BY-SA 3.0)',32,top+canvas.height+29);
+  g.font='11px Arial,sans-serif';g.fillText('openstreetmap.org/copyright · opentopomap.org/about · creativecommons.org/licenses/by-sa/3.0/ · Elaborazione grafica digitale',32,top+canvas.height+51);
+  return output;
+ }finally{
+  time=saved.time;showFullMap=saved.showFullMap;Object.assign(view,saved.view);selectedTrack=saved.selectedTrack;
+  stopFinale();finaleProgress=saved.finaleProgress;render();setPlaying(saved.playing);
+  if(!saved.playing)byId('play').textContent=saved.playLabel;
+ }
+}
+byId('export-jpeg').onclick=async()=>{
+ if(!cartographyReady)return;
+ const button=byId('export-jpeg'),status=byId('export-status');button.disabled=true;status.textContent='Preparo la stampa…';
+ try{
+  const output=finalPrintSnapshot();
+  const blob=await new Promise((resolve,reject)=>output.toBlob(value=>value?resolve(value):reject(new Error('JPEG non disponibile')),'image/jpeg',.95));
+  const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;
+  link.download='perdersi-ritrovarsi-'+experience.name.toLowerCase()+'-stampa.jpg';document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);status.textContent='JPEG pronto.';
+ }catch(error){status.textContent='Non riesco a creare il JPEG. Riprova.';}
+ finally{button.disabled=false;}
+};
+
 byId('bleed').onchange=e=>{spread=Number(e.target.value);resetPaper();render();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(playing)setPlaying(false);stopFinale();}else render();});
 render();

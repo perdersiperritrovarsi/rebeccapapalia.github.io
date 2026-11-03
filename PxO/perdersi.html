@@ -64,6 +64,7 @@ main{margin:0;max-width:none}.drawing{width:100%}.paper,.drawing,.map-credit{bac
 .track-row{grid-template-columns:minmax(0,1fr) 28px 32px}
 @media(max-width:760px){.track-row{grid-template-columns:minmax(0,1fr) 28px 28px}.map-toolbar{top:8px;right:8px}.map-help{left:8px;bottom:42px;font-size:9px}.place-card{left:8px;bottom:40px;max-width:calc(100% - 16px);padding:12px}.place-card h3{font-size:14px}.place-card p{margin:5px 0}.place-card select{padding:4px}.map-toolbar button{min-width:28px;min-height:28px}}
 @media(max-width:480px){.track-row{grid-template-columns:minmax(0,1fr) 28px 32px}.place-card{bottom:0;transform:translateY(100%)}.paper:has(.place-card:not([hidden])){padding-bottom:285px}.paper:has(.place-card:not([hidden])) .place-card{bottom:285px}.map-help{display:none}}
+.export-actions{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:12px}.export-button{background:transparent;border:1px solid var(--ink);color:var(--ink);padding:11px 16px;font-size:12px;border-radius:2px}.export-button:disabled{opacity:.45;cursor:wait}.export-status{font:11px/1.5 system-ui,sans-serif;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -75,7 +76,7 @@ main{margin:0;max-width:none}.drawing{width:100%}.paper,.drawing,.map-credit{bac
 <section class="place-card" id="place-card" hidden aria-labelledby="place-title"><button type="button" class="place-close" id="place-close" aria-label="Chiudi il luogo">×</button><h3 id="place-title">Esplora questo luogo</h3><label for="place-track">Presenza<select id="place-track"></select></label><p id="place-coordinates"></p><a id="place-maps" target="_blank" rel="noopener noreferrer">Apri Google Maps ↗</a><a id="place-street" target="_blank" rel="noopener noreferrer">Esplora Street View ↗</a><p class="place-note">Street View dove disponibile. Le fotografie possono essere state scattate in un altro momento.</p></section>
 <div class="map-credit">Dati e rete stradale © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors · ODbL</a>, SRTM · Mappa © <a href="https://opentopomap.org/about">OpenTopoMap</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a><span id="map-status" role="status"> · Preparazione della carta…</span></div></div></section>
 
-<section class="transport" aria-label="Controlli di riproduzione"><button class="play" id="play">▶ Avvia</button><div><div class="timeline-labels"><label for="timeline">Tempo trascorso <output id="elapsed">00:00</output></label><span id="total"></span></div><input id="timeline" type="range" min="0" step="0.1" value="0" aria-label="Tempo trascorso dalla partenza comune"></div><div class="options"><label>Velocità <select id="speed"><option value="1">1× · reale</option><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option><option value="120">120×</option></select></label><button class="all" id="all">Mostra tutto ↗</button></div></section>
+<section class="transport" aria-label="Controlli di riproduzione"><button class="play" id="play">▶ Avvia</button><div><div class="timeline-labels"><label for="timeline">Tempo trascorso <output id="elapsed">00:00</output></label><span id="total"></span></div><input id="timeline" type="range" min="0" step="0.1" value="0" aria-label="Tempo trascorso dalla partenza comune"></div><div class="options"><label>Velocità <select id="speed"><option value="1">1× · reale</option><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option><option value="120">120×</option></select></label><button class="all" id="all">Mostra tutto ↗</button></div><div class="export-actions"><button id="export-jpeg" class="export-button" disabled>Scarica la stampa JPEG ↓</button><span id="export-status" class="export-status" role="status"></span></div></section>
 <aside><div class="small">Perdersi · Pigmenti / Presenze</div><h2>Quindici presenze</h2><p>Il passo rivela un luogo e diventa una goccia.<br>L’incontro diventa un altro colore.</p><a class="gpx-download" href="gpx/perdersi.zip" download>Scarica i percorsi GPX ↗</a><div id="tracks" class="tracks"></div><div class="ink-controls"><label for="bleed">Diffusione sulla carta</label><select id="bleed"><option value="0.65" selected>Delicata</option><option value="1">Media</option><option value="1.65">Ampia</option></select></div><p class="legend-note">La cartografia affiora lungo i cammini: strade e nomi emergono dalla sfocatura e restano visibili nelle zone attraversate. “Mostra tutto” svela l’intera mappa. La coda della goccia si allunga con la velocità. Il passo lento lascia più pigmento; le soste formano accumuli. Seleziona una presenza per mostrarla o nasconderla. Usa il campione accanto per cambiarne il colore. Velocità calcolate sulle tracce con una finestra di 12 secondi.</p></aside>
 </main>
 <footer><p><strong>Un tempo condiviso.</strong> Il tempo iniziale di ogni percorso diventa 00:00. Durate e intervalli tra i punti restano quelli dei GPX: chi conclude prima si ferma, mentre gli altri proseguono. Gli spostamenti tra i punti sono interpolati.</p><p><strong>Inchiostro sulla carta.</strong> Una simulazione visiva: le gocce si allargano, i bordi assorbono il pigmento e i colori si mescolano per sovrapposizione. Strade nere e nomi incisi digitalmente sulla grana della carta: rete OpenStreetMap, con rilievi e curve di livello OpenTopoMap nell’area originale su carta bianco sporco e grigio chiaro con fibre, pieghe e marezzature. Mappa e percorsi sono incorporati: funziona offline. <a href="perdersi-linee.html">Confronta la versione a linee ↗</a></p></footer>
@@ -206,6 +207,7 @@ function paperMaterial(g){
  const edge=g.createRadialGradient(W/2,H/2,230,W/2,H/2,610);edge.addColorStop(0,'#72502400');edge.addColorStop(1,'#786f6315');g.fillStyle=edge;g.fillRect(0,0,W,H);
 }
 const cartography=JSON.parse(byId('cartography').textContent);
+let cartographyReady=false;
 function paintBasemap(tiles=[]){
  const g=basemap.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f2f2f2';g.fillRect(0,0,W,H);
  // Feather the original topographic coverage into the wider road network.
@@ -267,7 +269,7 @@ function paintBasemap(tiles=[]){
 paintBasemap();
 Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
  const bitmap=new Image();bitmap.onload=()=>resolve({...tile,bitmap});bitmap.onerror=()=>reject(new Error('Tessera incorporata non leggibile'));bitmap.src=tile.image;
-}))).then(tiles=>{paintBasemap(tiles);byId('map-status').textContent='';render();}).catch(()=>{byId('map-status').textContent=' · Impossibile leggere la base cartografica';});
+}))).then(tiles=>{paintBasemap(tiles);cartographyReady=true;byId('export-jpeg').disabled=false;byId('map-status').textContent='';render();}).catch(()=>{byId('map-status').textContent=' · Impossibile leggere la base cartografica';});
 const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 const maxTime=Math.max(...data.map(t=>t.duration));
 let time=0,showFullMap=false,playing=false,animation=null,last=null,spread=.65,dryIndex=0,dryTime=-Infinity;
@@ -479,6 +481,41 @@ byId('play').onclick=()=>{showFullMap=false;if(!playing&&time>=maxTime){time=0;r
 byId('timeline').max=maxTime;byId('total').textContent=fmt(maxTime);
 byId('timeline').oninput=e=>{showFullMap=false;time=Number(e.target.value);if(maxTime-time<.1)time=maxTime;setPlaying(false);render();};
 byId('all').onclick=()=>{showFullMap=true;time=maxTime;setPlaying(false);render();};
+// Export the complete artwork, independent of zoom, without moving the playhead.
+function finalPrintSnapshot(){
+ const saved={time,showFullMap,playing,view:{...view},selectedTrack,finaleProgress,playLabel:byId('play').textContent};
+ setPlaying(false);stopFinale();
+ try{
+  time=maxTime;showFullMap=true;finaleProgress=1;view.zoom=1;view.x=view.y=0;selectedTrack=null;render();
+  const output=document.createElement('canvas'),top=76,bottom=78;
+  output.width=canvas.width;output.height=canvas.height+top+bottom;
+  const g=output.getContext('2d');g.fillStyle='#f2f2f2';g.fillRect(0,0,output.width,output.height);
+  g.fillStyle='#171717';g.font='italic 30px Georgia,serif';g.fillText('Perdersi, ritrovarsi',32,44);
+  g.font='15px Arial,sans-serif';g.textAlign='right';g.fillText(experience.name,output.width-32,43);g.textAlign='left';
+  g.drawImage(canvas,0,top);
+  g.font='13px Arial,sans-serif';g.fillStyle='#444';
+  g.fillText('Dati e strade © OpenStreetMap contributors (ODbL) · SRTM · Cartografia © OpenTopoMap (CC BY-SA 3.0)',32,top+canvas.height+29);
+  g.font='11px Arial,sans-serif';g.fillText('openstreetmap.org/copyright · opentopomap.org/about · creativecommons.org/licenses/by-sa/3.0/ · Elaborazione grafica digitale',32,top+canvas.height+51);
+  return output;
+ }finally{
+  time=saved.time;showFullMap=saved.showFullMap;Object.assign(view,saved.view);selectedTrack=saved.selectedTrack;
+  stopFinale();finaleProgress=saved.finaleProgress;render();setPlaying(saved.playing);
+  if(!saved.playing)byId('play').textContent=saved.playLabel;
+ }
+}
+byId('export-jpeg').onclick=async()=>{
+ if(!cartographyReady)return;
+ const button=byId('export-jpeg'),status=byId('export-status');button.disabled=true;status.textContent='Preparo la stampa…';
+ try{
+  const output=finalPrintSnapshot();
+  const blob=await new Promise((resolve,reject)=>output.toBlob(value=>value?resolve(value):reject(new Error('JPEG non disponibile')),'image/jpeg',.95));
+  const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;
+  link.download='perdersi-ritrovarsi-'+experience.name.toLowerCase()+'-stampa.jpg';document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);status.textContent='JPEG pronto.';
+ }catch(error){status.textContent='Non riesco a creare il JPEG. Riprova.';}
+ finally{button.disabled=false;}
+};
+
 byId('bleed').onchange=e=>{spread=Number(e.target.value);resetPaper();render();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(playing)setPlaying(false);stopFinale();}else render();});
 render();
