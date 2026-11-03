@@ -7,8 +7,8 @@ const W=1000,H=620,DPR=1.6;
 const dry=document.createElement('canvas');dry.width=canvas.width;dry.height=canvas.height;
 const dryCtx=dry.getContext('2d');dryCtx.scale(DPR,DPR);
 function layer(){const c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;const g=c.getContext('2d');g.scale(DPR,DPR);return {canvas:c,ctx:g};}
-const colors=['#d52b30','#49bda5','#086d73','#d42683','#40318c','#e6ac21','#00afd0','#f47721','#8c3659','#668544','#7560a8','#ba655c','#287da0','#827234','#5a667e'];
-const colorNames=['Rosso','Acquamarina','Petrolio','Magenta','Indaco','Ambra','Ciano','Arancione','Amaranto','Oliva','Lavanda','Terracotta','Azzurro','Ocra','Ardesia'];
+const colors=data.map(()=>'#ff2600');
+const colorNames=data.map(()=>'Rosso');
 const points=data.flatMap(t=>t.segments.flat());
 const lat0=points.reduce((s,p)=>s+p[1],0)/points.length;
 // Web Mercator, scaled to local metres at the mean track latitude.

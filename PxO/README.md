@@ -38,7 +38,7 @@ La pagina inchiostro si apre all’istante 00:00: la cartografia è inizialmente
 
 La legenda si trova sotto i controlli di riproduzione, a loro volta sotto la mappa. Il campione circolare accanto a ogni presenza apre un selettore colore indipendente: il nuovo pigmento ridisegna goccia e macchie, mantenendo forma, tempo e visibilità del percorso. I colori scelti valgono per la pagina aperta; ricaricando si ripristina la palette iniziale.
 
-La palette P01–P08 è rosso, acquamarina, petrolio, magenta, indaco, ambra, ciano e arancione. P09–P15 aggiungono amaranto, oliva, lavanda, terracotta, azzurro, ocra e ardesia.
+Tutte le quindici tracce partono dal colore #FF2600. Il selettore accanto a ciascuna presenza permette di cambiarne il colore in modo indipendente.
 
 Ogni presenza deposita gocce con contorni irregolari, aloni trasparenti, bordi di pigmento e granulosità. La carta ha una trama procedurale. La diffusione cresce nei 100 secondi successivi alla deposizione, secondo il tempo della registrazione: a 30× corrispondono a circa 3,3 secondi sullo schermo. Pausa ferma anche la diffusione; la vista completa mostra le macchie assorbite.
 
