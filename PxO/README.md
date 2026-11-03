@@ -73,3 +73,15 @@ python3 tools/build_html.py
 ```
 
 Il generatore usa solo la libreria standard di Python e riscrive entrambi gli HTML. Per condividere la variante inchiostro basta copiare `index.html`. Copiare anche `percorsi.html` per mantenere il collegamento al confronto.
+
+## Trattamento calcografico digitale
+
+La rete OpenStreetMap mantiene le coordinate e distingue strade principali,
+secondarie e sentieri tramite il campo highway. Il segno nero carbone usa bordi
+più marcati sulle strade principali e tratti sottili sui sentieri. Micro-lacune
+e fibre deterministiche alleggeriscono localmente l'inchiostro senza sfocare
+le linee. I nomi aggiuntivi sono stampati in nero; le tessere topografiche
+restano sotto la rete con contrasto e densità ridotti per i rilievi.
+È un trattamento digitale della cartografia, non una mappa disegnata a mano.
+La matrice viene preparata una sola volta e resta compatibile con la rivelazione
+progressiva, il cursore temporale e i colori indipendenti dei percorsi.

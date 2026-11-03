@@ -51,7 +51,7 @@ ink = (ROOT / 'tools' / 'ink.html').read_text().replace('__INK_SCRIPT__', (ROOT 
 cartography_dir = ROOT / 'assets' / 'topography'
 cartography = json.loads((cartography_dir / 'manifest.json').read_text())
 roads = json.loads((ROOT / 'assets' / 'roads' / 'walking-network.geojson').read_text())
-cartography['roads'] = [f['geometry']['coordinates'] for f in roads['features']]
+cartography['roads'] = [dict(points=f['geometry']['coordinates'], kind=f['properties']['highway']) for f in roads['features']]
 # Preserve mapped road names beyond the coverage of the cached raster tiles.
 cartography['road_names'] = []
 for feature in roads['features']:

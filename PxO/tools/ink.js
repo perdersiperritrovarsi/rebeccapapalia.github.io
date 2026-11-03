@@ -105,14 +105,6 @@ function paperMaterial(g){
 const cartography=JSON.parse(byId('cartography').textContent);
 function paintBasemap(tiles=[]){
  const g=basemap.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f2f2f0';g.fillRect(0,0,W,H);
- // Cached OSM roads also cover the area beyond the original raster tiles.
- g.save();g.lineCap='round';g.lineJoin='round';
- for(const road of cartography.roads){
-  g.beginPath();road.forEach(([lon,lat],i)=>{const p=xy([0,lat,lon]);if(i)g.lineTo(...p);else g.moveTo(...p);});
-  g.strokeStyle='#d5d6d2';g.lineWidth=2.4;g.stroke();
-  g.strokeStyle='#fbfbf9';g.lineWidth=1.1;g.stroke();
- }
- g.restore();
  // Feather the original topographic coverage into the wider road network.
  const raster=layer(),rg=raster.ctx,bounds=[];
  for(const tile of tiles){
@@ -128,24 +120,46 @@ function paintBasemap(tiles=[]){
    const fade=rg.createLinearGradient(x0,y0,x1,y1);fade.addColorStop(0,'#0000');fade.addColorStop(1,'#000');rg.fillStyle=fade;rg.fillRect(0,0,W,H);
   }
  }
- g.save();g.globalCompositeOperation='multiply';g.globalAlpha=.54;g.filter='grayscale(1) contrast(.82) brightness(1.17)';
+ g.save();g.globalCompositeOperation='multiply';g.globalAlpha=.42;g.filter='grayscale(1) contrast(1.18) brightness(1.08)';
  g.drawImage(raster.canvas,0,0,W,H);
  g.restore();
+ // An independent ink plate keeps the paper grain out of the moving pigments.
+ const plate=layer(),ink=plate.ctx,rng=random(92841);
+ ink.lineCap='round';ink.lineJoin='round';
+ for(const road of cartography.roads){
+  const major=['primary','primary_link','secondary','secondary_link','tertiary','tertiary_link'].includes(road.kind);
+  const trail=['path','footway','steps','track','cycleway','bridleway'].includes(road.kind);
+  const width=major?1.8:trail?.55:1.05;
+  ink.beginPath();road.points.forEach(([lon,lat],i)=>{const p=xy([0,lat,lon]);if(i)ink.lineTo(...p);else ink.moveTo(...p);});
+  ink.setLineDash(trail?[1.4,1.1]:[]);ink.globalAlpha=.82+rng()*.15;ink.strokeStyle='#171918';ink.lineWidth=width;ink.stroke();
+  if(!trail){ink.globalAlpha=.92;ink.strokeStyle='#f2f2f0';ink.lineWidth=major?.85:.35;ink.stroke();}
+ }
+ ink.globalAlpha=1;ink.setLineDash([]);
  // OSM names complement the existing topographic labels, never inventing places.
- const labelBoxes=[],named=new Set();g.save();g.font='8px system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineJoin='round';
- const coverage=bounds.length?{left:Math.min(...bounds.map(p=>p[0])),right:Math.max(...bounds.map(p=>p[0])),top:Math.min(...bounds.map(p=>p[1])),bottom:Math.max(...bounds.map(p=>p[1]))}:null;
+ const labelBoxes=[],named=new Set();ink.save();ink.font='9px Georgia,serif';ink.textAlign='center';ink.textBaseline='middle';ink.lineJoin='round';
  for(const label of cartography.road_names){
   const [lon,lat]=label.at,[x,y]=xy([0,lat,lon]);
   if(x<35||x>W-35||y<35||y>H-35||named.has(label.name))continue;
-  if(coverage&&x>coverage.left-15&&x<coverage.right+15&&y>coverage.top-15&&y<coverage.bottom+15)continue;
-  const width=g.measureText(label.name).width;
+  const width=ink.measureText(label.name).width;
   if(width>170||labelBoxes.some(p=>Math.abs(p.x-x)<(p.width+width)/2+12&&Math.abs(p.y-y)<28))continue;
   const [a,b]=label.tangent.map(([lo,la])=>xy([0,la,lo]));let angle=Math.atan2(b[1]-a[1],b[0]-a[0]);
   if(angle>Math.PI/2)angle-=Math.PI;if(angle<-Math.PI/2)angle+=Math.PI;
-  g.save();g.translate(x,y);g.rotate(angle);g.strokeStyle='#f2f2f0';g.lineWidth=3;g.strokeText(label.name,0,-5);g.fillStyle='#727772';g.fillText(label.name,0,-5);g.restore();
+  ink.save();ink.translate(x,y);ink.rotate(angle);ink.strokeStyle='#f2f2f0';ink.lineWidth=2.8;ink.strokeText(label.name,0,-5);ink.fillStyle='#171918';ink.fillText(label.name,0,-5);ink.restore();
   labelBoxes.push({x,y,width});named.add(label.name);
  }
- g.restore();paperMaterial(g);refreshHazyMap();
+ ink.restore();
+ // Small missing deposits and fine fibres mimic ink caught by paper, not blur.
+ ink.save();ink.globalCompositeOperation='destination-out';
+ for(let j=0;j<22000;j++){
+  ink.fillStyle=`rgba(0,0,0,${.12+rng()*.34})`;ink.fillRect(rng()*W,rng()*H,.18+rng()*.55,.15+rng()*.45);
+ }
+ ink.lineWidth=.22;
+ for(let j=0;j<1400;j++){
+  const x=rng()*W,y=rng()*H;ink.strokeStyle=`rgba(0,0,0,${.15+rng()*.3})`;
+  ink.beginPath();ink.moveTo(x,y);ink.quadraticCurveTo(x+1.5,y-.6,x+2+rng()*3,y+(rng()-.5)*1.7);ink.stroke();
+ }
+ ink.restore();g.save();g.globalCompositeOperation='multiply';g.drawImage(plate.canvas,0,0,W,H);g.restore();
+ paperMaterial(g);refreshHazyMap();
 }
 paintBasemap();
 Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
