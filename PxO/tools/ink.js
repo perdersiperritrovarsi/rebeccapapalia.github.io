@@ -7,8 +7,8 @@ const W=1000,H=620,DPR=1.6;
 const dry=document.createElement('canvas');dry.width=canvas.width;dry.height=canvas.height;
 const dryCtx=dry.getContext('2d');dryCtx.scale(DPR,DPR);
 function layer(){const c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;const g=c.getContext('2d');g.scale(DPR,DPR);return {canvas:c,ctx:g};}
-const colors=['#d52b30','#49bda5','#086d73','#d42683','#40318c','#e6ac21','#00afd0','#f47721'];
-const colorNames=['Rosso','Acquamarina','Petrolio','Magenta','Indaco','Ambra','Ciano','Arancione'];
+const colors=['#d52b30','#49bda5','#086d73','#d42683','#40318c','#e6ac21','#00afd0','#f47721','#8c3659','#668544','#7560a8','#ba655c','#287da0','#827234','#5a667e'];
+const colorNames=['Rosso','Acquamarina','Petrolio','Magenta','Indaco','Ambra','Ciano','Arancione','Amaranto','Oliva','Lavanda','Terracotta','Azzurro','Ocra','Ardesia'];
 const points=data.flatMap(t=>t.segments.flat());
 const lat0=points.reduce((s,p)=>s+p[1],0)/points.length;
 // Web Mercator, scaled to local metres at the mean track latitude.
@@ -113,7 +113,7 @@ data.forEach((t,i)=>{
   if(!prev||p[0]-prevTime>=4||j===part.points.length-1){const m=motion(t,p[0]);stamps.push({t:p[0],x:pos[0]+(rng()-.5)*2,y:pos[1]+(rng()-.5)*2,owner:t,variant:Math.floor(rng()*9),radius:(17+rng()*22)*(1.35-Math.min(m.speed/9,1)*.65),angle:rng()*Math.PI*2,aspect:.55+rng()*.8,opacity:.5+rng()*.7});prev=pos;prevTime=p[0];}
  });}
  const button=document.createElement('button');button.type='button';button.className='track';button.style.setProperty('--color',t.color);button.setAttribute('aria-pressed','true');button.setAttribute('aria-label',`Mostra o nascondi il percorso ${t.id}`);
- button.innerHTML=`<span class="swatch"></span><span class="track-name"><span class="track-color-name">${t.id} · ${t.colorName}</span><span class="track-meta">${(t.distance/1000).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})} km · ${fmt(t.duration)}</span></span><span class="track-live"><span class="status"></span><span class="speed-readout"></span><span class="speed-meter"><span></span></span></span>`;
+ button.innerHTML=`<span class="swatch"></span><span class="track-name"><span class="track-color-name">${t.id}${t.simulated?' · simulato':''} · ${t.colorName}</span><span class="track-meta">${(t.distance/1000).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})} km · ${fmt(t.duration)}</span></span><span class="track-live"><span class="status"></span><span class="speed-readout"></span><span class="speed-meter"><span></span></span></span>`;
  t.status=button.querySelector('.status');t.speedReadout=button.querySelector('.speed-readout');t.speedMeter=button.querySelector('.speed-meter span');button.onclick=()=>{t.visible=!t.visible;button.setAttribute('aria-pressed',String(t.visible));resetPaper();render();};const row=document.createElement('div');row.className='track-row';row.appendChild(button);
  const picker=document.createElement('input');picker.type='color';picker.className='color-picker';picker.value=t.color;picker.setAttribute('aria-label',`Colore della traccia ${t.id}`);picker.title=`Cambia colore di ${t.id}`;row.appendChild(picker);byId('tracks').appendChild(row);
  t.button=button;t.picker=picker;t.colorLabel=button.querySelector('.track-color-name');
@@ -124,7 +124,7 @@ data.forEach((t,i)=>{
 stamps.sort((a,b)=>a.t-b.t);
 function recolor(t,value){
  t.color=value;const match=colors.indexOf(value.toLowerCase());t.colorName=match<0?value.toUpperCase():colorNames[match];
- t.button.style.setProperty('--color',value);t.colorLabel.textContent=`${t.id} · ${t.colorName}`;
+ t.button.style.setProperty('--color',value);t.colorLabel.textContent=`${t.id}${t.simulated?' · simulato':''} · ${t.colorName}`;
  t.sprites=Array.from({length:9},(_,j)=>Array.from({length:3},(_,stage)=>makeStamp(value,t.paletteIndex*101+j+1,stage)));
  resetPaper();render();
 }

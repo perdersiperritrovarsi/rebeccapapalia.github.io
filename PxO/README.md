@@ -1,6 +1,26 @@
+## Presenze simulate aggiuntive
+
+P01–P08 sono le otto registrazioni originali e sono conservate senza modifiche.
+P09–P15 sono sette percorsi **simulati**, non partecipanti o osservazioni reali.
+Condividono esattamente il primo punto di P01 (38.2210700, 15.6667530).
+Il generatore ricombina la rete dei punti originali unendo campioni vicini entro
+12 metri: le geometrie rimangono nella stessa zona, ma non costituiscono una
+verifica cartografica della percorribilità. Non vengono inventate nuove strade.
+Le soste, le velocità e le date GPX (1 gennaio 2000, data convenzionale) sono
+artificiali. Le etichette “simulato” sono visibili in entrambe le pagine.
+
+Rigenerazione deterministica, dalla cartella PxO:
+
+```sh
+python3 tools/simulate_tracks.py
+python3 tools/build_html.py
+```
+
+Le simulazioni ampliano la composizione artistica, non il campione della ricerca.
+
 # Perdersi, ritrovarsi
 
-Due proposte grafiche per gli otto cammini contenuti in `gpx/`: **index.html** (inchiostro) e **percorsi.html** (linee originali).
+Due proposte grafiche per i quindici cammini (otto registrati e sette simulati) contenuti in `gpx/`: **index.html** (inchiostro) e **percorsi.html** (linee originali).
 
 Aprire **index.html** con un browser: è un singolo file autonomo, con dati, stili e codice incorporati. Non richiede installazioni, connessione o server. Il titolo e i testi sono una proposta modificabile.
 
@@ -10,7 +30,7 @@ La pagina inizialmente mostra i percorsi completi. **Avvia** fa ripartire tutte 
 
 La legenda si trova sotto i controlli di riproduzione, a loro volta sotto la mappa. Il campione circolare accanto a ogni presenza apre un selettore colore indipendente: il nuovo pigmento ridisegna goccia e macchie, mantenendo forma, tempo e visibilità del percorso. I colori scelti valgono per la pagina aperta; ricaricando si ripristina la palette iniziale.
 
-La palette, nell’ordine P01–P08, è rosso, acquamarina, petrolio, magenta, indaco, ambra, ciano e arancione.
+La palette P01–P08 è rosso, acquamarina, petrolio, magenta, indaco, ambra, ciano e arancione. P09–P15 aggiungono amaranto, oliva, lavanda, terracotta, azzurro, ocra e ardesia.
 
 Ogni presenza deposita gocce con contorni irregolari, aloni trasparenti, bordi di pigmento e granulosità. La carta ha una trama procedurale. La diffusione cresce nei 100 secondi successivi alla deposizione, secondo il tempo della registrazione: a 30× corrispondono a circa 3,3 secondi sullo schermo. Pausa ferma anche la diffusione; la vista completa mostra le macchie assorbite.
 
@@ -22,7 +42,7 @@ La posizione corrente è rappresentata da una goccia lucida orientata lungo la d
 
 La base di `index.html` proviene da OpenTopoMap: strade, nomi dei luoghi, curve di livello e ombreggiatura dei rilievi. Le 12 tessere della sola inquadratura (zoom 15) sono conservate in `assets/topography/` e incorporate nell’HTML come immagini base64. La visualizzazione non interroga servizi esterni.
 
-La cartografia viene desaturata e alleggerita, con un minimo viraggio caldo, poi sovrapposta a un fondo avorio neutro ispirato alla carta Rosaspina (#f4f0e9), con fibre, pori, marezzature, pieghe leggere e bordi appena scuriti. È un’interpretazione a schermo, non una calibrazione del campione fisico. Il trattamento è calcolato una volta sola, sotto i pigmenti. La base è fissa e non navigabile; il suo dettaglio è quello della cartografia sorgente.
+La cartografia viene desaturata e alleggerita, senza viraggio seppia, poi sovrapposta a un fondo bianco sporco/grigio chiaro (#f2f2f0), con fibre, pori, marezzature, pieghe leggere e bordi appena scuriti. È un’interpretazione a schermo, non una calibrazione del campione fisico. Il trattamento è calcolato una volta sola, sotto i pigmenti. La base è fissa e non navigabile; il suo dettaglio è quello della cartografia sorgente.
 
 Dati © contributori OpenStreetMap, SRTM. Cartografia © OpenTopoMap, CC BY-SA 3.0. Fonte e licenza sono visibili sotto la mappa e in `assets/topography/LICENSE.md`. La versione cromaticamente modificata della mappa è distribuita con la stessa licenza.
 

@@ -13,7 +13,9 @@ for source in sorted((ROOT / 'gpx').glob('*.gpx')):
     origin = None
     distance = 0
     previous_time = None
-    for segment in ET.parse(source).findall('.//{*}trkseg'):
+    document = ET.parse(source)
+    simulated = document.findtext('.//{*}trk/{*}type') == 'simulated'
+    for segment in document.findall('.//{*}trkseg'):
         points = []
         previous = None
         for point in segment.findall('{*}trkpt'):
@@ -39,8 +41,9 @@ for source in sorted((ROOT / 'gpx').glob('*.gpx')):
             segments.append(points)
     if not segments:
         raise ValueError(f'{source.name}: nessuna traccia')
-    tracks.append(dict(id=source.stem, segments=segments, distance=round(distance), duration=segments[-1][-1][0]))
-assert len(tracks) == 8, 'Sono attesi otto percorsi'
+    tracks.append(dict(id=source.stem, simulated=simulated, segments=segments, distance=round(distance), duration=segments[-1][-1][0]))
+assert len(tracks) == 15, 'Sono attesi otto percorsi registrati e sette simulati'
+assert sum(t['simulated'] for t in tracks) == 7
 template = (ROOT / 'tools' / 'page.html').read_text()
 payload = json.dumps(tracks, separators=(',', ':'))
 (ROOT / 'percorsi.html').write_text(template.replace('__TRACK_DATA__', payload))
