@@ -1,3 +1,19 @@
+## PxO: le due esperienze sulla stessa carta
+
+`pxo.html` riunisce tutte le trenta traiettorie: quindici Perdersi in indaco e
+quindici Ritrovarsi in rosso-arancio, con la stessa inquadratura e lo stesso
+istante iniziale 00:00. Gli ID restano P01–P15 in ogni serie e la legenda indica
+la serie per distinguere gli omonimi. Non vengono aggiunti o alterati GPX.
+L'archivio `gpx/pxo.zip` conserva i file in due cartelle separate.
+
+I depositi dei cammini si mescolano per sovrapposizione in multiply; anche le
+gocce mobili della vista PxO si mescolano quando si sovrappongono. Le zone già
+attraversate conservano memoria del pigmento, quindi anche passaggi in tempi
+diversi possono stratificarsi sulla carta. Non è un modello fisico dei fluidi.
+Ogni colore resta modificabile singolarmente. La carta monocromatica, la
+rivelazione progressiva e la dissolvenza finale sono condivise dalle tre viste.
+La vista a linee corrispondente è `pxo-linee.html`.
+
 ## Due esperienze: Perdersi e Ritrovarsi
 
 - `index.html`: **Ritrovarsi**, i quindici percorsi già presenti, colore iniziale #FF2600.

@@ -57,7 +57,7 @@ main{margin:0;max-width:none}.drawing{width:100%}.paper,.drawing,.map-credit{bac
 </style>
 </head>
 <body>
-<header><div><h1>Perdersi, <em>ritrovarsi.</em></h1><nav class="series-nav" aria-label="Scegli il cammino"><a href="perdersi.html" style="--series-color:#4938a8" aria-current="page">Perdersi</a><a href="index.html" style="--series-color:#ff2600">Ritrovarsi</a></nav></div><p class="intro">molteplici cammini, molteplici tempi,<br>inchiostri che si incontrano,<br>si diffondono, lasciano una memoria</p></header>
+<header><div><h1>Perdersi, <em>ritrovarsi.</em></h1><nav class="series-nav" aria-label="Scegli il cammino"><a href="perdersi.html" style="--series-color:#4938a8" aria-current="page">Perdersi</a><a href="index.html" style="--series-color:#ff2600">Ritrovarsi</a><a href="pxo.html" style="--series-color:#862d46">PxO</a></nav></div><p class="intro">molteplici cammini, molteplici tempi,<br>inchiostri che si incontrano,<br>si diffondono, lasciano una memoria</p></header>
 <main>
 <section class="drawing" aria-label="Rappresentazione geografica dei quindici percorsi"><div class="drawing-head"><p class="small">Geografie di un incontro</p><strong id="viewLabel">Tutte le tracce</strong></div><div class="paper"><canvas id="map" class="map" width="1600" height="992" role="img" aria-label="Quindici cammini come gocce di inchiostro colorato che si diffondono e si mescolano sulla carta"></canvas><div class="map-credit">Dati e rete stradale © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors · ODbL</a>, SRTM · Mappa © <a href="https://opentopomap.org/about">OpenTopoMap</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a><span id="map-status" role="status"> · Preparazione della carta…</span></div></div></section>
 
@@ -78,10 +78,11 @@ const canvas=byId('map'),ctx=canvas.getContext('2d');
 const W=1000,H=620,DPR=1.6;
 const dry=document.createElement('canvas');dry.width=canvas.width;dry.height=canvas.height;
 const dryCtx=dry.getContext('2d');dryCtx.scale(DPR,DPR);
-function layer(){const c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;const g=c.getContext('2d');g.scale(DPR,DPR);return {canvas:c,ctx:g};}
+function layer(ratio=DPR){const c=document.createElement('canvas');c.width=Math.round(W*ratio);c.height=Math.round(H*ratio);const g=c.getContext('2d');g.scale(ratio,ratio);return {canvas:c,ctx:g};}
 const experience=JSON.parse(byId('experience').textContent);
-const colors=data.map(()=>experience.color);
-const colorNames=data.map(()=>experience.colorName);
+const colors=data.map(t=>t.initialColor||experience.color);
+const colorNames=data.map(t=>t.initialColorName||experience.colorName);
+const trackTitle=t=>t.series?`${t.id} · ${t.series}`:t.id;
 const points=JSON.parse(byId('map-frame').textContent);
 const lat0=points.reduce((s,p)=>s+p[1],0)/points.length;
 // Web Mercator, scaled to local metres at the mean track latitude.
@@ -130,6 +131,9 @@ function makeStamp(color,seed,stage){
  g.globalCompositeOperation='destination-out';for(let j=0;j<100;j++){g.globalAlpha=.12+rng()*.4;g.fillRect(30+rng()*132,30+rng()*132,1+rng()*2,.3+rng()*1.2);}g.restore();
  // Broken tide marks, never a uniform outline.
  for(let j=0;j<160;j++){if(rng()<.45)continue;const a=contour[j],b=contour[(j+1)%160];g.beginPath();g.moveTo(...a);g.lineTo(...b);g.strokeStyle=ink(.12+rng()*.23);g.lineWidth=.4+rng()*.7;g.stroke();}
+ if(experience.name==='PxO'){
+  const small=document.createElement('canvas');small.width=small.height=128;small.getContext('2d').drawImage(c,0,0,128,128);return small;
+ }
  return c;
 }
 const basemap=layer(),hazyMap=layer(),revealedMap=layer(),revealMask=layer(),finalPrint=layer();
@@ -269,7 +273,7 @@ function animateFinale(now){
 }
 const stamps=[],revealEvents=[];
 data.forEach((t,i)=>{
- t.color=colors[i];t.colorName=colorNames[i];t.paletteIndex=i;t.visible=true;t.paper=layer();t.parts=t.segments.map(points=>({points,coords:points.map(xy)}));
+ t.color=colors[i];t.colorName=colorNames[i];t.paletteIndex=i;t.visible=true;t.paper=layer(experience.name==='PxO'?1:DPR);t.parts=t.segments.map(points=>({points,coords:points.map(xy)}));
  t.sprites=Array.from({length:9},(_,j)=>Array.from({length:3},(_,stage)=>makeStamp(t.color,i*101+j+1,stage)));
  // Keep segment boundaries: no cartography is revealed across gaps in a GPX.
  for(const part of t.parts){
@@ -286,10 +290,10 @@ data.forEach((t,i)=>{
   const pos=part.coords[j];
   if(!prev||p[0]-prevTime>=4||j===part.points.length-1){const m=motion(t,p[0]);stamps.push({t:p[0],x:pos[0]+(rng()-.5)*2,y:pos[1]+(rng()-.5)*2,owner:t,variant:Math.floor(rng()*9),radius:(17+rng()*22)*(1.35-Math.min(m.speed/9,1)*.65),angle:rng()*Math.PI*2,aspect:.55+rng()*.8,opacity:.5+rng()*.7});prev=pos;prevTime=p[0];}
  });}
- const button=document.createElement('button');button.type='button';button.className='track';button.style.setProperty('--color',t.color);button.setAttribute('aria-pressed','true');button.setAttribute('aria-label',`Mostra o nascondi il percorso ${t.id}`);
- button.innerHTML=`<span class="swatch"></span><span class="track-name"><span class="track-color-name">${t.id} · ${t.colorName}</span><span class="track-meta">${(t.distance/1000).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})} km · ${fmt(t.duration)}</span></span><span class="track-live"><span class="status"></span><span class="speed-readout"></span><span class="speed-meter"><span></span></span></span>`;
+ const button=document.createElement('button');button.type='button';button.className='track';button.style.setProperty('--color',t.color);button.setAttribute('aria-pressed','true');button.setAttribute('aria-label',`Mostra o nascondi il percorso ${trackTitle(t)}`);
+ button.innerHTML=`<span class="swatch"></span><span class="track-name"><span class="track-color-name">${trackTitle(t)} · ${t.colorName}</span><span class="track-meta">${(t.distance/1000).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})} km · ${fmt(t.duration)}</span></span><span class="track-live"><span class="status"></span><span class="speed-readout"></span><span class="speed-meter"><span></span></span></span>`;
  t.status=button.querySelector('.status');t.speedReadout=button.querySelector('.speed-readout');t.speedMeter=button.querySelector('.speed-meter span');button.onclick=()=>{t.visible=!t.visible;button.setAttribute('aria-pressed',String(t.visible));resetPaper();render();};const row=document.createElement('div');row.className='track-row';row.appendChild(button);
- const picker=document.createElement('input');picker.type='color';picker.className='color-picker';picker.value=t.color;picker.setAttribute('aria-label',`Colore della traccia ${t.id}`);picker.title=`Cambia colore di ${t.id}`;row.appendChild(picker);byId('tracks').appendChild(row);
+ const picker=document.createElement('input');picker.type='color';picker.className='color-picker';picker.value=t.color;picker.setAttribute('aria-label',`Colore della traccia ${trackTitle(t)}`);picker.title=`Cambia colore di ${trackTitle(t)}`;row.appendChild(picker);byId('tracks').appendChild(row);
  t.button=button;t.picker=picker;t.colorLabel=button.querySelector('.track-color-name');
  let recolorTimer;
  const applyColor=()=>{clearTimeout(recolorTimer);if(t.color===picker.value)return;recolor(t,picker.value);};
@@ -317,7 +321,7 @@ function drawCartography(){
 }
 function recolor(t,value){
  t.color=value;const match=colors.indexOf(value.toLowerCase());t.colorName=match<0?value.toUpperCase():colorNames[match];
- t.button.style.setProperty('--color',value);t.colorLabel.textContent=`${t.id} · ${t.colorName}`;
+ t.button.style.setProperty('--color',value);t.colorLabel.textContent=`${trackTitle(t)} · ${t.colorName}`;
  t.sprites=Array.from({length:9},(_,j)=>Array.from({length:3},(_,stage)=>makeStamp(value,t.paletteIndex*101+j+1,stage)));
  resetPaper();render();
 }
@@ -341,11 +345,11 @@ function motion(t,at=time){
 }
 function drawDrop(t,pos,m){
  const v=Math.min(m.speed/8,1),tail=5+v*7;
- ctx.save();ctx.globalCompositeOperation='source-over';ctx.translate(...pos);ctx.rotate(m.angle);ctx.scale(1.5,1.5);ctx.shadowColor=t.color+'44';ctx.shadowBlur=2;ctx.shadowOffsetY=1;
+ ctx.save();ctx.globalCompositeOperation=experience.name==='PxO'?'multiply':'source-over';ctx.translate(...pos);ctx.rotate(m.angle);ctx.scale(1.5,1.5);ctx.shadowColor=t.color+'44';ctx.shadowBlur=2;ctx.shadowOffsetY=1;
  // A rounded, wet head with a tapered tail that lengthens with ground speed.
  ctx.beginPath();ctx.moveTo(-tail,0);ctx.bezierCurveTo(-7,-1,-4,-5,0,-5);ctx.bezierCurveTo(8,-7,10,5,2,6);ctx.bezierCurveTo(-3,7,-7,2,-tail,0);ctx.closePath();
  const wet=ctx.createLinearGradient(-tail,0,8,0);wet.addColorStop(0,t.color+'16');wet.addColorStop(.55,t.color+'c0');wet.addColorStop(1,t.color);ctx.fillStyle=wet;ctx.fill();ctx.strokeStyle=t.color+'aa';ctx.lineWidth=.6;ctx.stroke();
- ctx.beginPath();ctx.ellipse(3,-2,2.2,.9,-.3,0,Math.PI*2);ctx.fillStyle='#ffffffaa';ctx.fill();ctx.restore();
+ ctx.globalCompositeOperation='source-over';ctx.beginPath();ctx.ellipse(3,-2,2.2,.9,-.3,0,Math.PI*2);ctx.fillStyle='#ffffffaa';ctx.fill();ctx.restore();
 }
 function render(){
  updateFinale();
