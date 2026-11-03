@@ -7,9 +7,10 @@ const W=1000,H=620,DPR=1.6;
 const dry=document.createElement('canvas');dry.width=canvas.width;dry.height=canvas.height;
 const dryCtx=dry.getContext('2d');dryCtx.scale(DPR,DPR);
 function layer(){const c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;const g=c.getContext('2d');g.scale(DPR,DPR);return {canvas:c,ctx:g};}
-const colors=data.map(()=>'#ff2600');
-const colorNames=data.map(()=>'Rosso');
-const points=data.flatMap(t=>t.segments.flat());
+const experience=JSON.parse(byId('experience').textContent);
+const colors=data.map(()=>experience.color);
+const colorNames=data.map(()=>experience.colorName);
+const points=JSON.parse(byId('map-frame').textContent);
 const lat0=points.reduce((s,p)=>s+p[1],0)/points.length;
 // Web Mercator, scaled to local metres at the mean track latitude.
 // Tiles and tracks use exactly the same transform.
@@ -71,11 +72,16 @@ brushContext.fillStyle=halo;brushContext.fillRect(0,0,128,128);
 function resetExploration(){
  revealMask.ctx.clearRect(0,0,W,H);revealIndex=0;revealTime=-Infinity;revealDirty=true;
 }
+function monochromeSurface(g){
+ const image=g.getImageData(0,0,g.canvas.width,g.canvas.height),pixels=image.data;
+ for(let i=0;i<pixels.length;i+=4){const grey=Math.round(.2126*pixels[i]+.7152*pixels[i+1]+.0722*pixels[i+2]);pixels[i]=pixels[i+1]=pixels[i+2]=grey;}
+ g.putImageData(image,0,0);
+}
 function refreshHazyMap(){
  const g=hazyMap.ctx;g.save();g.globalCompositeOperation='source-over';g.globalAlpha=1;g.filter='none';
- g.fillStyle='#f2f2f0';g.fillRect(0,0,W,H);paperMaterial(g);
+ g.fillStyle='#f2f2f2';g.fillRect(0,0,W,H);paperMaterial(g);
  g.globalCompositeOperation='source-over';g.globalAlpha=.16;g.filter='blur(7px)';
- g.drawImage(basemap.canvas,0,0,W,H);g.restore();revealDirty=true;
+ g.drawImage(basemap.canvas,0,0,W,H);g.restore();monochromeSurface(g);revealDirty=true;
  // Only the outer margins dissolve into the paper in the closing print.
  const f=finalPrint.ctx;f.save();f.globalCompositeOperation='source-over';f.clearRect(0,0,W,H);f.drawImage(basemap.canvas,0,0,W,H);
  f.globalCompositeOperation='destination-in';
@@ -111,7 +117,7 @@ function paperMaterial(g){
 }
 const cartography=JSON.parse(byId('cartography').textContent);
 function paintBasemap(tiles=[]){
- const g=basemap.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f2f2f0';g.fillRect(0,0,W,H);
+ const g=basemap.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f2f2f2';g.fillRect(0,0,W,H);
  // Feather the original topographic coverage into the wider road network.
  const raster=layer(),rg=raster.ctx,bounds=[];
  for(const tile of tiles){
@@ -136,14 +142,14 @@ function paintBasemap(tiles=[]){
  for(const road of cartography.roads){
   const major=['primary','primary_link','secondary','secondary_link','tertiary','tertiary_link'].includes(road.kind);
   const trail=['path','footway','steps','track','cycleway','bridleway'].includes(road.kind);
-  const width=major?1.8:trail?.55:1.05;
+  const width=major?2.05:trail?.65:1.2;
   ink.beginPath();road.points.forEach(([lon,lat],i)=>{const p=xy([0,lat,lon]);if(i)ink.lineTo(...p);else ink.moveTo(...p);});
-  ink.setLineDash(trail?[1.4,1.1]:[]);ink.globalAlpha=.82+rng()*.15;ink.strokeStyle='#171918';ink.lineWidth=width;ink.stroke();
-  if(!trail){ink.globalAlpha=.92;ink.strokeStyle='#f2f2f0';ink.lineWidth=major?.85:.35;ink.stroke();}
+  ink.setLineDash(trail?[1.4,1.1]:[]);ink.globalAlpha=.82+rng()*.15;ink.strokeStyle='#101010';ink.lineWidth=width;ink.stroke();
+  if(!trail){ink.globalAlpha=.92;ink.strokeStyle='#f2f2f2';ink.lineWidth=major?.85:.35;ink.stroke();}
  }
  ink.globalAlpha=1;ink.setLineDash([]);
  // OSM names complement the existing topographic labels, never inventing places.
- const labelBoxes=[],named=new Set();ink.save();ink.font='9px Georgia,serif';ink.textAlign='center';ink.textBaseline='middle';ink.lineJoin='round';
+ const labelBoxes=[],named=new Set();ink.save();ink.font='9.5px Georgia,serif';ink.textAlign='center';ink.textBaseline='middle';ink.lineJoin='round';
  for(const label of cartography.road_names){
   const [lon,lat]=label.at,[x,y]=xy([0,lat,lon]);
   if(x<35||x>W-35||y<35||y>H-35||named.has(label.name))continue;
@@ -151,7 +157,7 @@ function paintBasemap(tiles=[]){
   if(width>170||labelBoxes.some(p=>Math.abs(p.x-x)<(p.width+width)/2+12&&Math.abs(p.y-y)<28))continue;
   const [a,b]=label.tangent.map(([lo,la])=>xy([0,la,lo]));let angle=Math.atan2(b[1]-a[1],b[0]-a[0]);
   if(angle>Math.PI/2)angle-=Math.PI;if(angle<-Math.PI/2)angle+=Math.PI;
-  ink.save();ink.translate(x,y);ink.rotate(angle);ink.strokeStyle='#f2f2f0';ink.lineWidth=2.8;ink.strokeText(label.name,0,-5);ink.fillStyle='#171918';ink.fillText(label.name,0,-5);ink.restore();
+  ink.save();ink.translate(x,y);ink.rotate(angle);ink.strokeStyle='#f2f2f2';ink.lineWidth=2.8;ink.strokeText(label.name,0,-5);ink.fillStyle='#101010';ink.fillText(label.name,0,-5);ink.restore();
   labelBoxes.push({x,y,width});named.add(label.name);
  }
  ink.restore();
@@ -166,7 +172,7 @@ function paintBasemap(tiles=[]){
   ink.beginPath();ink.moveTo(x,y);ink.quadraticCurveTo(x+1.5,y-.6,x+2+rng()*3,y+(rng()-.5)*1.7);ink.stroke();
  }
  ink.restore();g.save();g.globalCompositeOperation='multiply';g.drawImage(plate.canvas,0,0,W,H);g.restore();
- paperMaterial(g);refreshHazyMap();
+ paperMaterial(g);monochromeSurface(g);refreshHazyMap();
 }
 paintBasemap();
 Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
@@ -291,7 +297,7 @@ function render(){
   t.speedMeter.style.width=`${!t.visible||arrived?0:Math.min(m.speed/8,1)*100}%`;
   if(t.visible&&!complete&&!arrived)drawDrop(t,pos,m);
  }
- ctx.globalCompositeOperation='source-over';ctx.fillStyle='#827e70';ctx.strokeStyle='#aaa591';ctx.lineWidth=.6;ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText('N',942,55);ctx.beginPath();ctx.moveTo(942,64);ctx.lineTo(942,91);ctx.moveTo(938,70);ctx.lineTo(942,64);ctx.lineTo(946,70);ctx.stroke();ctx.textAlign='left';ctx.beginPath();ctx.moveTo(55,563);ctx.lineTo(55,568);ctx.lineTo(55+250*scale,568);ctx.lineTo(55+250*scale,563);ctx.stroke();ctx.fillText('250 m',55,589);
+ ctx.globalCompositeOperation='source-over';ctx.fillStyle='#555555';ctx.strokeStyle='#777777';ctx.lineWidth=.6;ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText('N',942,55);ctx.beginPath();ctx.moveTo(942,64);ctx.lineTo(942,91);ctx.moveTo(938,70);ctx.lineTo(942,64);ctx.lineTo(946,70);ctx.stroke();ctx.textAlign='left';ctx.beginPath();ctx.moveTo(55,563);ctx.lineTo(55,568);ctx.lineTo(55+250*scale,568);ctx.lineTo(55+250*scale,563);ctx.stroke();ctx.fillText('250 m',55,589);
  byId('elapsed').textContent=fmt(time);byId('timeline').value=time;byId('timeline').setAttribute('aria-valuetext',fmt(time));byId('viewLabel').textContent=complete?'Ciò che resta sulla carta':time===0?'Prima della prima goccia':'Il colore incontra la carta';
 }
 function setPlaying(value){if(animation!==null)cancelAnimationFrame(animation);animation=null;playing=value;last=null;byId('play').textContent=playing?'Ⅱ Pausa':time>=maxTime?'▶ Avvia':'▶ Riprendi';if(playing)animation=requestAnimationFrame(frame);}

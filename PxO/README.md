@@ -1,3 +1,29 @@
+## Due esperienze: Perdersi e Ritrovarsi
+
+- `index.html`: **Ritrovarsi**, i quindici percorsi già presenti, colore iniziale #FF2600.
+- `perdersi.html`: **Perdersi**, quindici nuove traiettorie P01–P15, colore iniziale indaco #4938A8.
+- I collegamenti in alto passano da una serie all'altra; i selettori colore rimangono indipendenti.
+- Entrambe condividono la stessa inquadratura, con nord in alto, e la stessa stampa in soli grigi.
+- Le versioni a linee sono `percorsi.html` e `perdersi-linee.html`.
+- Ogni pagina offre il download del proprio archivio GPX: `gpx/ritrovarsi.zip` o `gpx/perdersi.zip`.
+
+La serie Perdersi è generata sul grafo OpenStreetMap già incluso nel progetto;
+non corrisponde a nuove registrazioni raccolte da partecipanti. I metadati GPX
+mantengono questa provenienza. I quindici file sono separati in `gpx/perdersi/`,
+senza sovrascrivere i file della serie precedente. Partono tutti dal nodo OSM
+9704082483 (38.2072486, 15.6585736) e arrivano a quindici punti distinti più a nord.
+Soste, velocità e date sono generate e ripetibili. Il report delle geometrie è
+`assets/roads/perdersi-report.json`. Si rigenera con:
+
+```sh
+python3 tools/build_perdersi.py
+python3 tools/build_html.py
+```
+
+La stampa, la carta sfocata e la stampa finale vengono convertite pixel per pixel
+in scala di grigi: nessuna dominante calda o cromatica nella cartografia. Il nero
+delle strade è più marcato. I pigmenti dei cammini restano separati e colorabili.
+
 ## Provenienza dei percorsi aggiuntivi
 
 P01–P08 sono le otto registrazioni originali, conservate senza modifiche.
