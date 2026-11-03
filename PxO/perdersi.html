@@ -510,7 +510,7 @@ byId('export-jpeg').onclick=async()=>{
   const output=finalPrintSnapshot();
   const blob=await new Promise((resolve,reject)=>output.toBlob(value=>value?resolve(value):reject(new Error('JPEG non disponibile')),'image/jpeg',.95));
   const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;
-  link.download='perdersi-ritrovarsi-'+experience.name.toLowerCase()+'-stampa.jpg';document.body.appendChild(link);link.click();link.remove();
+  link.download='Cartografia_PerdersiPerRitrovarsi.jpg';document.body.appendChild(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),30000);status.textContent='JPEG pronto.';
  }catch(error){status.textContent='Non riesco a creare il JPEG. Riprova.';}
  finally{button.disabled=false;}

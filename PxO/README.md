@@ -175,3 +175,5 @@ o anelli di selezione. Non dipende dal livello di zoom o dal punto della timelin
 La posizione temporale e l'eventuale riproduzione vengono ripristinate dopo
 la cattura. Nessun caricamento esterno: il file è creato localmente nel browser.
 L'esportazione si abilita quando tutte le tessere incorporate sono pronte.
+
+Il nome proposto al download JPEG è `Cartografia_PerdersiPerRitrovarsi.jpg` in tutte le viste.
