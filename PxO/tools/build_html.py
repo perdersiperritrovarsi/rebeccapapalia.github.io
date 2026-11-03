@@ -50,6 +50,8 @@ payload = json.dumps(tracks, separators=(',', ':'))
 ink = (ROOT / 'tools' / 'ink.html').read_text().replace('__INK_SCRIPT__', (ROOT / 'tools' / 'ink.js').read_text())
 cartography_dir = ROOT / 'assets' / 'topography'
 cartography = json.loads((cartography_dir / 'manifest.json').read_text())
+roads = json.loads((ROOT / 'assets' / 'roads' / 'walking-network.geojson').read_text())
+cartography['roads'] = [f['geometry']['coordinates'] for f in roads['features']]
 for tile in cartography['tiles']:
     tile['image'] = 'data:image/png;base64,' + base64.b64encode((cartography_dir / tile['file']).read_bytes()).decode('ascii')
 ink = ink.replace('__MAP_DATA__', json.dumps(cartography, separators=(',', ':')))

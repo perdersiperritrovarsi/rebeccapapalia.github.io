@@ -85,18 +85,37 @@ function paperMaterial(g){
  const crease=g.createLinearGradient(0,305,0,318);crease.addColorStop(0,'#71502b00');crease.addColorStop(.45,'#71502b09');crease.addColorStop(.6,'#fffdfa17');crease.addColorStop(1,'#71502b00');g.fillStyle=crease;g.fillRect(0,305,W,13);
  const edge=g.createRadialGradient(W/2,H/2,230,W/2,H/2,610);edge.addColorStop(0,'#72502400');edge.addColorStop(1,'#786f6315');g.fillStyle=edge;g.fillRect(0,0,W,H);
 }
+const cartography=JSON.parse(byId('cartography').textContent);
 function paintBasemap(tiles=[]){
  const g=basemap.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f2f2f0';g.fillRect(0,0,W,H);
- g.save();g.globalCompositeOperation='multiply';g.globalAlpha=.54;g.filter='grayscale(1) contrast(.82) brightness(1.17)';
+ // Cached OSM roads also cover the area beyond the original raster tiles.
+ g.save();g.lineCap='round';g.lineJoin='round';
+ for(const road of cartography.roads){
+  g.beginPath();road.forEach(([lon,lat],i)=>{const p=xy([0,lat,lon]);if(i)g.lineTo(...p);else g.moveTo(...p);});
+  g.strokeStyle='#d5d6d2';g.lineWidth=2.4;g.stroke();
+  g.strokeStyle='#fbfbf9';g.lineWidth=1.1;g.stroke();
+ }
+ g.restore();
+ // Feather the original topographic coverage into the wider road network.
+ const raster=layer(),rg=raster.ctx,bounds=[];
  for(const tile of tiles){
   const n=2**tile.z,lon=x=>x/n*360-180,lat=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;
   const a=xy([0,lat(tile.y),lon(tile.x)]),b=xy([0,lat(tile.y+1),lon(tile.x+1)]);
-  g.drawImage(tile.bitmap,a[0],a[1],b[0]-a[0],b[1]-a[1]);
+  rg.drawImage(tile.bitmap,a[0],a[1],b[0]-a[0],b[1]-a[1]);bounds.push(a,b);
  }
+ if(bounds.length){
+  const left=Math.min(...bounds.map(p=>p[0])),right=Math.max(...bounds.map(p=>p[0]));
+  const top=Math.min(...bounds.map(p=>p[1])),bottom=Math.max(...bounds.map(p=>p[1]));
+  rg.globalCompositeOperation='destination-in';
+  for(const [x0,y0,x1,y1] of [[left,0,left+35,0],[right,0,right-35,0],[0,top,0,top+35],[0,bottom,0,bottom-35]]){
+   const fade=rg.createLinearGradient(x0,y0,x1,y1);fade.addColorStop(0,'#0000');fade.addColorStop(1,'#000');rg.fillStyle=fade;rg.fillRect(0,0,W,H);
+  }
+ }
+ g.save();g.globalCompositeOperation='multiply';g.globalAlpha=.54;g.filter='grayscale(1) contrast(.82) brightness(1.17)';
+ g.drawImage(raster.canvas,0,0,W,H);
  g.restore();paperMaterial(g);
 }
 paintBasemap();
-const cartography=JSON.parse(byId('cartography').textContent);
 Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
  const bitmap=new Image();bitmap.onload=()=>resolve({...tile,bitmap});bitmap.onerror=()=>reject(new Error('Tessera incorporata non leggibile'));bitmap.src=tile.image;
 }))).then(tiles=>{paintBasemap(tiles);byId('map-status').textContent='';render();}).catch(()=>{byId('map-status').textContent=' · Impossibile leggere la base cartografica';});
@@ -113,7 +132,7 @@ data.forEach((t,i)=>{
   if(!prev||p[0]-prevTime>=4||j===part.points.length-1){const m=motion(t,p[0]);stamps.push({t:p[0],x:pos[0]+(rng()-.5)*2,y:pos[1]+(rng()-.5)*2,owner:t,variant:Math.floor(rng()*9),radius:(17+rng()*22)*(1.35-Math.min(m.speed/9,1)*.65),angle:rng()*Math.PI*2,aspect:.55+rng()*.8,opacity:.5+rng()*.7});prev=pos;prevTime=p[0];}
  });}
  const button=document.createElement('button');button.type='button';button.className='track';button.style.setProperty('--color',t.color);button.setAttribute('aria-pressed','true');button.setAttribute('aria-label',`Mostra o nascondi il percorso ${t.id}`);
- button.innerHTML=`<span class="swatch"></span><span class="track-name"><span class="track-color-name">${t.id}${t.simulated?' · simulato':''} · ${t.colorName}</span><span class="track-meta">${(t.distance/1000).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})} km · ${fmt(t.duration)}</span></span><span class="track-live"><span class="status"></span><span class="speed-readout"></span><span class="speed-meter"><span></span></span></span>`;
+ button.innerHTML=`<span class="swatch"></span><span class="track-name"><span class="track-color-name">${t.id} · ${t.colorName}</span><span class="track-meta">${(t.distance/1000).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})} km · ${fmt(t.duration)}</span></span><span class="track-live"><span class="status"></span><span class="speed-readout"></span><span class="speed-meter"><span></span></span></span>`;
  t.status=button.querySelector('.status');t.speedReadout=button.querySelector('.speed-readout');t.speedMeter=button.querySelector('.speed-meter span');button.onclick=()=>{t.visible=!t.visible;button.setAttribute('aria-pressed',String(t.visible));resetPaper();render();};const row=document.createElement('div');row.className='track-row';row.appendChild(button);
  const picker=document.createElement('input');picker.type='color';picker.className='color-picker';picker.value=t.color;picker.setAttribute('aria-label',`Colore della traccia ${t.id}`);picker.title=`Cambia colore di ${t.id}`;row.appendChild(picker);byId('tracks').appendChild(row);
  t.button=button;t.picker=picker;t.colorLabel=button.querySelector('.track-color-name');
@@ -124,7 +143,7 @@ data.forEach((t,i)=>{
 stamps.sort((a,b)=>a.t-b.t);
 function recolor(t,value){
  t.color=value;const match=colors.indexOf(value.toLowerCase());t.colorName=match<0?value.toUpperCase():colorNames[match];
- t.button.style.setProperty('--color',value);t.colorLabel.textContent=`${t.id}${t.simulated?' · simulato':''} · ${t.colorName}`;
+ t.button.style.setProperty('--color',value);t.colorLabel.textContent=`${t.id} · ${t.colorName}`;
  t.sprites=Array.from({length:9},(_,j)=>Array.from({length:3},(_,stage)=>makeStamp(value,t.paletteIndex*101+j+1,stage)));
  resetPaper();render();
 }

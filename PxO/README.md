@@ -1,13 +1,21 @@
-## Presenze simulate aggiuntive
+## Provenienza dei percorsi aggiuntivi
 
-P01–P08 sono le otto registrazioni originali e sono conservate senza modifiche.
-P09–P15 sono sette percorsi **simulati**, non partecipanti o osservazioni reali.
-Condividono esattamente il primo punto di P01 (38.2210700, 15.6667530).
-Il generatore ricombina la rete dei punti originali unendo campioni vicini entro
-12 metri: le geometrie rimangono nella stessa zona, ma non costituiscono una
-verifica cartografica della percorribilità. Non vengono inventate nuove strade.
-Le soste, le velocità e le date GPX (1 gennaio 2000, data convenzionale) sono
-artificiali. Le etichette “simulato” sono visibili in entrambe le pagine.
+P01–P08 sono le otto registrazioni originali, conservate senza modifiche.
+P09–P15 sono traiettorie artistiche generate, non osservazioni di partecipanti.
+Le etichette della visualizzazione usano soltanto ID e colori.
+La provenienza è mantenuta nei metadati GPX e in questa documentazione.
+Tutte le nuove tracce partono dal primo punto di P01 (38.2210700, 15.6667530),
+collegato al nodo OpenStreetMap più vicino con un raccordo di circa 7 metri.
+Seguono archi connessi della rete OSM pedonale memorizzata in assets/roads.
+Almeno il 65% di ogni percorso è a oltre 35 metri dai campioni GPS originali;
+i tratti condivisi da due nuovi percorsi non superano il 40% del più corto.
+Il campionamento spaziale per questa misura è ogni 15 metri al massimo.
+Le soste, le velocità e le date GPX (1 gennaio 2000, convenzionale) sono generate.
+Il grafo OSM non garantisce accessibilità o sicurezza effettiva delle strade.
+Fonte, query e data in assets/roads/source.json; © OpenStreetMap contributors,
+ODbL 1.0: https://www.openstreetmap.org/copyright .
+Il report con i nodi, le distanze e le sovrapposizioni è in assets/roads/route-report.json.
+Le nuove traiettorie sostituiscono le precedenti ricombinazioni dei GPS originali.
 
 Rigenerazione deterministica, dalla cartella PxO:
 
@@ -24,7 +32,7 @@ Due proposte grafiche per i quindici cammini (otto registrati e sette simulati) 
 
 Aprire **index.html** con un browser: è un singolo file autonomo, con dati, stili e codice incorporati. Non richiede installazioni, connessione o server. Il titolo e i testi sono una proposta modificabile.
 
-La pagina inizialmente mostra i percorsi completi. **Avvia** fa ripartire tutte le persone dal tempo relativo 00:00. Si possono mettere in pausa, scorrere il tempo, cambiare velocità (1×–120×), tornare alla vista completa e nascondere singoli percorsi cliccando la legenda. A 30× la registrazione più lunga dura circa 90 secondi sullo schermo.
+La pagina inizialmente mostra i percorsi completi. **Avvia** fa ripartire tutte le persone dal tempo relativo 00:00. Si possono mettere in pausa, scorrere il tempo, cambiare velocità (1×–120×), tornare alla vista completa e nascondere singoli percorsi cliccando la legenda. La durata a schermo dipende dalla traccia più lunga e dalla velocità di riproduzione.
 
 ## Variante inchiostro
 
