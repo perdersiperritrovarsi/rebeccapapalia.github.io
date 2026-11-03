@@ -34,21 +34,44 @@ aside>p{margin-bottom:20px}
 @media(max-width:1100px){.tracks{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:30px}}
 @media(max-width:760px){.map{height:auto;min-height:260px;max-height:none}.transport{grid-row:auto}.tracks{column-gap:18px}.track-row{gap:7px}.track-name{font-size:10px}.track-meta{font-size:8px}.speed-readout{font-size:9px}.color-picker{width:28px;height:28px}.track-row{grid-template-columns:minmax(0,1fr) 28px}}
 @media(max-width:480px){.tracks{grid-template-columns:1fr}.track-name{font-size:12px}.track-meta{font-size:10px}.color-picker{width:32px;height:32px}.track-row{grid-template-columns:minmax(0,1fr) 32px}.speed-readout{font-size:11px}}
+
+/* Neutral palette, full-width map, persistent title. */
+:root{--paper:#f2f2f0;--line:#d8d9d7;--muted:#686c6b;--accent:#862d46}
+header{position:sticky;top:0;z-index:10;background:rgba(242,242,240,.96);backdrop-filter:blur(12px);padding:30px 3vw;align-items:center;transition:padding .25s ease}
+h1{font-style:italic;font-size:clamp(38px,4.5vw,72px);transition:font-size .25s ease}h1 em{color:var(--accent)}
+.intro{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;line-height:1.65;letter-spacing:.005em;max-width:340px}
+header.is-compact{padding-top:14px;padding-bottom:14px}header.is-compact h1{font-size:clamp(30px,3vw,46px)}
+main{margin:0;max-width:none}.drawing{width:100%}.paper,.drawing,.map-credit{background:var(--paper)}
+.map{width:100%;height:auto;min-height:0;max-height:none;aspect-ratio:1600/992}
+.drawing-head{background:linear-gradient(100deg,#f2f2f0f2,#f2f2f0b0 75%,transparent)}
+.drawing-head .small,.map-credit{color:var(--muted)}
+.transport,aside{margin-left:3vw;margin-right:3vw}footer{margin-left:3vw;margin-right:3vw;max-width:none}
+@media(min-width:1600px){header{padding-left:3vw;padding-right:3vw}main{margin:0;max-width:none}footer{margin:0 3vw;max-width:none}}
+@media(max-width:760px){header{display:flex;flex-wrap:wrap;gap:14px;padding:22px 5vw}.intro{margin:0;max-width:none;font-size:12px}h1{font-size:clamp(34px,7vw,50px)}header.is-compact{padding:10px 5vw}header.is-compact h1{font-size:30px}.transport,aside{margin-left:5vw;margin-right:5vw}.drawing-head{top:4px;left:0;padding:6px 10px}.drawing-head .small{font-size:8px}.drawing-head strong{font-size:12px}}
+@media(prefers-reduced-motion:reduce){header,h1{transition:none}}
 </style>
 </head>
 <body>
-<header><div><p class="eyebrow">Studio sui percorsi · 02 / Inchiostro</p><h1>Perdersi, <em>ritrovarsi.</em></h1></div><p class="intro">Otto cammini, un unico tempo di partenza.<br>Otto inchiostri che si incontrano,<br>si diffondono, lasciano una memoria.</p></header>
+<header><div><h1>Perdersi, <em>ritrovarsi.</em></h1></div><p class="intro">Otto cammini, un unico tempo di partenza.<br>Otto inchiostri che si incontrano,<br>si diffondono, lasciano una memoria.</p></header>
 <main>
 <section class="drawing" aria-label="Rappresentazione geografica degli otto percorsi"><div class="drawing-head"><p class="small">Geografie di un incontro</p><strong id="viewLabel">Tutte le tracce</strong></div><div class="paper"><canvas id="map" class="map" width="1600" height="992" role="img" aria-label="Otto cammini come gocce di inchiostro colorato che si diffondono e si mescolano sulla carta"></canvas><div class="map-credit">Dati © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM · Mappa © <a href="https://opentopomap.org/about">OpenTopoMap</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a><span id="map-status" role="status"> · Preparazione della carta…</span></div></div></section>
 
 <section class="transport" aria-label="Controlli di riproduzione"><button class="play" id="play">▶ Avvia</button><div><div class="timeline-labels"><label for="timeline">Tempo trascorso <output id="elapsed">00:00</output></label><span id="total"></span></div><input id="timeline" type="range" min="0" step="0.1" value="0" aria-label="Tempo trascorso dalla partenza comune"></div><div class="options"><label>Velocità <select id="speed"><option value="1">1× · reale</option><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option><option value="120">120×</option></select></label><button class="all" id="all">Mostra tutto ↗</button></div></section>
 <aside><div class="small">Pigmenti / Presenze</div><h2>Otto presenze</h2><p>Il passo diventa una goccia.<br>L’incontro diventa un altro colore.</p><div id="tracks" class="tracks"></div><div class="ink-controls"><label for="bleed">Diffusione sulla carta</label><select id="bleed"><option value="0.65">Delicata</option><option value="1" selected>Media</option><option value="1.65">Ampia</option></select></div><p class="legend-note">La coda della goccia si allunga con la velocità. Il passo lento lascia più pigmento; le soste formano accumuli. Seleziona una presenza per mostrarla o nasconderla. Usa il campione accanto per cambiarne il colore. Velocità stimate dal GPS su 12 secondi.</p></aside>
 </main>
-<footer><p><strong>Un tempo condiviso.</strong> L'orario iniziale di ogni registrazione diventa 00:00. Durate e intervalli tra i punti restano quelli dei GPX: chi conclude prima si ferma, mentre gli altri proseguono. Gli spostamenti tra punti registrati sono interpolati.</p><p><strong>Inchiostro sulla carta.</strong> Una simulazione visiva: le gocce si allargano, i bordi assorbono il pigmento e i colori si mescolano per sovrapposizione. Strade, rilievi e curve di livello reali da OpenTopoMap su carta avorio ispirata alla Rosaspina con fibre, pieghe e marezzature. Mappa e percorsi sono incorporati: funziona offline. <a href="percorsi.html">Confronta la versione a linee ↗</a></p></footer>
+<footer><p><strong>Un tempo condiviso.</strong> L'orario iniziale di ogni registrazione diventa 00:00. Durate e intervalli tra i punti restano quelli dei GPX: chi conclude prima si ferma, mentre gli altri proseguono. Gli spostamenti tra punti registrati sono interpolati.</p><p><strong>Inchiostro sulla carta.</strong> Una simulazione visiva: le gocce si allargano, i bordi assorbono il pigmento e i colori si mescolano per sovrapposizione. Strade, rilievi e curve di livello reali da OpenTopoMap su carta bianco sporco e grigio chiaro con fibre, pieghe e marezzature. Mappa e percorsi sono incorporati: funziona offline. <a href="percorsi.html">Confronta la versione a linee ↗</a></p></footer>
 <script id="cartography" type="application/json">__MAP_DATA__</script>
 <script id="data" type="application/json">__TRACK_DATA__</script>
 <script>
 __INK_SCRIPT__
+const pageHeader=document.querySelector('header');
+let compactHeader=false;
+function updateHeader(){
+ const next=window.scrollY>(compactHeader?24:140);
+ if(next!==compactHeader){compactHeader=next;pageHeader.classList.toggle('is-compact',next);}
+}
+window.addEventListener('scroll',updateHeader,{passive:true});
+updateHeader();
 </script>
 </body>
 </html>

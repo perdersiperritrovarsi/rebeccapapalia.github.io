@@ -86,8 +86,8 @@ function paperMaterial(g){
  const edge=g.createRadialGradient(W/2,H/2,230,W/2,H/2,610);edge.addColorStop(0,'#72502400');edge.addColorStop(1,'#786f6315');g.fillStyle=edge;g.fillRect(0,0,W,H);
 }
 function paintBasemap(tiles=[]){
- const g=basemap.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f4f0e9';g.fillRect(0,0,W,H);
- g.save();g.globalCompositeOperation='multiply';g.globalAlpha=.54;g.filter='grayscale(1) sepia(.12) contrast(.82) brightness(1.17)';
+ const g=basemap.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f2f2f0';g.fillRect(0,0,W,H);
+ g.save();g.globalCompositeOperation='multiply';g.globalAlpha=.54;g.filter='grayscale(1) contrast(.82) brightness(1.17)';
  for(const tile of tiles){
   const n=2**tile.z,lon=x=>x/n*360-180,lat=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;
   const a=xy([0,lat(tile.y),lon(tile.x)]),b=xy([0,lat(tile.y+1),lon(tile.x+1)]);
