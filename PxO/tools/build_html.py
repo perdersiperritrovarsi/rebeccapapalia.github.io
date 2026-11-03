@@ -89,36 +89,40 @@ mixed = [dict(t, series=name, initialColor=pigment, initialColorName=color_name,
 for title, filename, comparison, series_tracks, color, color_name in [
     ('Ritrovarsi', 'index.html', 'percorsi.html', tracks, '#ff2600', 'Rosso'),
     ('Perdersi', 'perdersi.html', 'perdersi-linee.html', perdersi, '#4938a8', 'Indaco'),
-    ('PxO', 'pxo.html', 'pxo-linee.html', mixed, '#4938a8', 'Indaco'),
+    ('Incontro', 'incontro.html', 'incontro-linee.html', mixed, '#4938a8', 'Indaco'),
 ]:
     archive_name = title.lower() + '.zip'
-    folders = [('Perdersi', ROOT/'gpx/perdersi'),('Ritrovarsi', ROOT/'gpx')] if title == 'PxO' else [(title, ROOT/'gpx'/('perdersi' if title=='Perdersi' else ''))]
+    folders = [('Perdersi', ROOT/'gpx/perdersi'),('Ritrovarsi', ROOT/'gpx')] if title == 'Incontro' else [(title, ROOT/'gpx'/('perdersi' if title=='Perdersi' else ''))]
     with zipfile.ZipFile(ROOT / 'gpx' / archive_name, 'w', zipfile.ZIP_DEFLATED) as archive:
         for group, folder in folders:
             for source in sorted(folder.glob('P*.gpx')):
-                entry = group+'/'+source.name if title=='PxO' else source.name
+                entry = group+'/'+source.name if title=='Incontro' else source.name
                 info = zipfile.ZipInfo(entry, date_time=(2000,1,1,0,0,0))
                 info.compress_type = zipfile.ZIP_DEFLATED
                 archive.writestr(info, source.read_bytes())
     links = []
-    for name, target, pigment in [('Perdersi','perdersi.html','#4938a8'),('Ritrovarsi','index.html','#ff2600'),('PxO','pxo.html','#862d46')]:
+    for name, target, pigment in [('Perdersi','perdersi.html','#4938a8'),('Ritrovarsi','index.html','#ff2600'),('Incontro','incontro.html','#862d46')]:
         current = ' aria-current="page"' if name == title else ''
         links.append(f'<a href="{target}" style="--series-color:{pigment}"{current}>{name}</a>')
-    config = json.dumps(dict(name=title, color=color, colorName=color_name))
+    config = json.dumps(dict(name=title, color=color, colorName=color_name, combined=title=='Incontro'))
     page = ink.replace('__TRACK_DATA__', json.dumps(series_tracks, separators=(',', ':')))
     page = page.replace('__EXPERIENCE__', config).replace('__SERIES_LINKS__', ''.join(links))
     page = page.replace('__SERIES_LABEL__', title).replace('__GPX_ARCHIVE__', 'gpx/' + archive_name)
-    if title in ('Perdersi','PxO'):
+    if title in ('Perdersi','Incontro'):
         page = page.replace('href="percorsi.html"', f'href="{comparison}"')
-    if title == 'PxO':
+    if title == 'Incontro':
         page = page.replace('dei quindici percorsi','dei trenta percorsi').replace('Quindici cammini','Trenta cammini').replace('Quindici presenze','Trenta presenze')
         page = page.replace('Il passo rivela un luogo e diventa una goccia.<br>L’incontro diventa un altro colore.', 'Perdersi e ritrovarsi abitano la stessa carta.<br>Indaco e rosso si incontrano, si sovrappongono, si mescolano.')
     (ROOT / filename).write_text(page)
-    if title in ('Perdersi','PxO'):
+    if title == 'Incontro':
+        (ROOT / 'pxo.html').write_text(page)  # Keep previously shared links working.
+    if title in ('Perdersi','Incontro'):
         lines = template.replace('__TRACK_DATA__', json.dumps(series_tracks, separators=(',', ':')))
         lines = lines.replace("t.initialColor||'#ff2600'", f"t.initialColor||'{color}'")
-        if title == 'PxO':
+        if title == 'Incontro':
             lines = lines.replace('Quindici','Trenta').replace('quindici','trenta')
         (ROOT / comparison).write_text(lines)
+        if title == 'Incontro':
+            (ROOT / 'pxo-linee.html').write_text(lines)
     print(f'{filename}: {title}, {len(series_tracks)} percorsi, colore {color}')
 print(f'Creato index.html: {len(tracks)} percorsi, {sum(len(s) for t in tracks for s in t["segments"])} punti')

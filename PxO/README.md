@@ -1,3 +1,13 @@
+## Nome del sito e terza vista
+
+Il titolo del sito resta **Perdersi, ritrovarsi**. Il terzo menu si chiama
+**Incontro**, disponibile in `incontro.html`, con trenta tracce delle due serie.
+`pxo.html` rimane una copia compatibile per i collegamenti già condivisi.
+L'archivio corrente è `gpx/incontro.zip`; la vista a linee è `incontro-linee.html`.
+La diffusione iniziale è **Delicata** (0.65) in tutte e tre le viste; Media e Ampia
+restano selezionabili. I riferimenti a PxO nelle sezioni precedenti del lavoro
+indicano la stessa vista, prima del cambio di nome.
+
 ## PxO: le due esperienze sulla stessa carta
 
 `pxo.html` riunisce tutte le trenta traiettorie: quindici Perdersi in indaco e

@@ -59,7 +59,7 @@ function makeStamp(color,seed,stage){
  g.globalCompositeOperation='destination-out';for(let j=0;j<100;j++){g.globalAlpha=.12+rng()*.4;g.fillRect(30+rng()*132,30+rng()*132,1+rng()*2,.3+rng()*1.2);}g.restore();
  // Broken tide marks, never a uniform outline.
  for(let j=0;j<160;j++){if(rng()<.45)continue;const a=contour[j],b=contour[(j+1)%160];g.beginPath();g.moveTo(...a);g.lineTo(...b);g.strokeStyle=ink(.12+rng()*.23);g.lineWidth=.4+rng()*.7;g.stroke();}
- if(experience.name==='PxO'){
+ if(experience.combined){
   const small=document.createElement('canvas');small.width=small.height=128;small.getContext('2d').drawImage(c,0,0,128,128);return small;
  }
  return c;
@@ -184,7 +184,7 @@ Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
 }))).then(tiles=>{paintBasemap(tiles);byId('map-status').textContent='';render();}).catch(()=>{byId('map-status').textContent=' · Impossibile leggere la base cartografica';});
 const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 const maxTime=Math.max(...data.map(t=>t.duration));
-let time=0,showFullMap=false,playing=false,animation=null,last=null,spread=1,dryIndex=0,dryTime=-Infinity;
+let time=0,showFullMap=false,playing=false,animation=null,last=null,spread=.65,dryIndex=0,dryTime=-Infinity;
 // Trial based on commit 08757a1: restore that revision to undo this finale.
 let finaleProgress=0,finaleFrame=null,finaleLast=null;
 function stopFinale(){if(finaleFrame!==null)cancelAnimationFrame(finaleFrame);finaleFrame=null;finaleLast=null;}
@@ -201,7 +201,7 @@ function animateFinale(now){
 }
 const stamps=[],revealEvents=[];
 data.forEach((t,i)=>{
- t.color=colors[i];t.colorName=colorNames[i];t.paletteIndex=i;t.visible=true;t.paper=layer(experience.name==='PxO'?1:DPR);t.parts=t.segments.map(points=>({points,coords:points.map(xy)}));
+ t.color=colors[i];t.colorName=colorNames[i];t.paletteIndex=i;t.visible=true;t.paper=layer(experience.combined?1:DPR);t.parts=t.segments.map(points=>({points,coords:points.map(xy)}));
  t.sprites=Array.from({length:9},(_,j)=>Array.from({length:3},(_,stage)=>makeStamp(t.color,i*101+j+1,stage)));
  // Keep segment boundaries: no cartography is revealed across gaps in a GPX.
  for(const part of t.parts){
@@ -273,7 +273,7 @@ function motion(t,at=time){
 }
 function drawDrop(t,pos,m){
  const v=Math.min(m.speed/8,1),tail=5+v*7;
- ctx.save();ctx.globalCompositeOperation=experience.name==='PxO'?'multiply':'source-over';ctx.translate(...pos);ctx.rotate(m.angle);ctx.scale(1.5,1.5);ctx.shadowColor=t.color+'44';ctx.shadowBlur=2;ctx.shadowOffsetY=1;
+ ctx.save();ctx.globalCompositeOperation=experience.combined?'multiply':'source-over';ctx.translate(...pos);ctx.rotate(m.angle);ctx.scale(1.5,1.5);ctx.shadowColor=t.color+'44';ctx.shadowBlur=2;ctx.shadowOffsetY=1;
  // A rounded, wet head with a tapered tail that lengthens with ground speed.
  ctx.beginPath();ctx.moveTo(-tail,0);ctx.bezierCurveTo(-7,-1,-4,-5,0,-5);ctx.bezierCurveTo(8,-7,10,5,2,6);ctx.bezierCurveTo(-3,7,-7,2,-tail,0);ctx.closePath();
  const wet=ctx.createLinearGradient(-tail,0,8,0);wet.addColorStop(0,t.color+'16');wet.addColorStop(.55,t.color+'c0');wet.addColorStop(1,t.color);ctx.fillStyle=wet;ctx.fill();ctx.strokeStyle=t.color+'aa';ctx.lineWidth=.6;ctx.stroke();
