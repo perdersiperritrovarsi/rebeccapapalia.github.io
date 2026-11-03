@@ -85,3 +85,12 @@ restano sotto la rete con contrasto e densità ridotti per i rilievi.
 È un trattamento digitale della cartografia, non una mappa disegnata a mano.
 La matrice viene preparata una sola volta e resta compatibile con la rivelazione
 progressiva, il cursore temporale e i colori indipendenti dei percorsi.
+
+## Prova della stampa finale
+
+Versione di riferimento prima della prova: commit `08757a1`.
+Alla fine di tutti i cammini (o con “Mostra tutto”), la stampa completa emerge
+in circa tre secondi reali, indipendentemente dalla velocità di riproduzione.
+Solo i bordi esterni restano sfumati sulla carta; la grana e i pigmenti rimangono.
+Riavviando o tornando indietro nel tempo si ripristina la rivelazione locale.
+Con la preferenza di movimento ridotto la stampa finale appare senza animazione.

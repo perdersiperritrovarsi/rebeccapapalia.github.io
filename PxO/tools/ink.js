@@ -59,7 +59,7 @@ function makeStamp(color,seed,stage){
  for(let j=0;j<160;j++){if(rng()<.45)continue;const a=contour[j],b=contour[(j+1)%160];g.beginPath();g.moveTo(...a);g.lineTo(...b);g.strokeStyle=ink(.12+rng()*.23);g.lineWidth=.4+rng()*.7;g.stroke();}
  return c;
 }
-const basemap=layer(),hazyMap=layer(),revealedMap=layer(),revealMask=layer();
+const basemap=layer(),hazyMap=layer(),revealedMap=layer(),revealMask=layer(),finalPrint=layer();
 let revealDirty=true,revealIndex=0,revealTime=-Infinity;
 // Fixed, soft impressions make the reveal independent of playback frame rate.
 const revealBrush=document.createElement('canvas');revealBrush.width=revealBrush.height=128;
@@ -76,6 +76,13 @@ function refreshHazyMap(){
  g.fillStyle='#f2f2f0';g.fillRect(0,0,W,H);paperMaterial(g);
  g.globalCompositeOperation='source-over';g.globalAlpha=.16;g.filter='blur(7px)';
  g.drawImage(basemap.canvas,0,0,W,H);g.restore();revealDirty=true;
+ // Only the outer margins dissolve into the paper in the closing print.
+ const f=finalPrint.ctx;f.save();f.globalCompositeOperation='source-over';f.clearRect(0,0,W,H);f.drawImage(basemap.canvas,0,0,W,H);
+ f.globalCompositeOperation='destination-in';
+ for(const [x0,y0,x1,y1] of [[0,0,55,0],[W,0,W-55,0],[0,0,0,32],[0,H,0,H-32]]){
+  const edge=f.createLinearGradient(x0,y0,x1,y1);edge.addColorStop(0,'#0000');edge.addColorStop(1,'#000');f.fillStyle=edge;f.fillRect(0,0,W,H);
+ }
+ f.restore();
 }
 function paperMaterial(g){
  const rng=random(74931);
@@ -168,6 +175,20 @@ Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
 const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 const maxTime=Math.max(...data.map(t=>t.duration));
 let time=0,showFullMap=false,playing=false,animation=null,last=null,spread=1,dryIndex=0,dryTime=-Infinity;
+// Trial based on commit 08757a1: restore that revision to undo this finale.
+let finaleProgress=0,finaleFrame=null,finaleLast=null;
+function stopFinale(){if(finaleFrame!==null)cancelAnimationFrame(finaleFrame);finaleFrame=null;finaleLast=null;}
+function updateFinale(){
+ if(time<maxTime&&!showFullMap){stopFinale();finaleProgress=0;return;}
+ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){stopFinale();finaleProgress=1;return;}
+ if(finaleProgress<1&&finaleFrame===null&&!document.hidden)finaleFrame=requestAnimationFrame(animateFinale);
+}
+function animateFinale(now){
+ finaleFrame=null;
+ if(time<maxTime&&!showFullMap)return;
+ if(finaleLast!==null)finaleProgress=Math.min(1,finaleProgress+Math.min(100,now-finaleLast)/3000);
+ finaleLast=now;render();
+}
 const stamps=[],revealEvents=[];
 data.forEach((t,i)=>{
  t.color=colors[i];t.colorName=colorNames[i];t.paletteIndex=i;t.visible=true;t.paper=layer();t.parts=t.segments.map(points=>({points,coords:points.map(xy)}));
@@ -210,8 +231,11 @@ function drawCartography(){
   g.drawImage(basemap.canvas,0,0,W,H);g.globalCompositeOperation='destination-in';
   g.drawImage(revealMask.canvas,0,0,W,H);g.restore();revealDirty=false;
  }
- if(showFullMap)ctx.drawImage(basemap.canvas,0,0,W,H);
- else{ctx.drawImage(hazyMap.canvas,0,0,W,H);ctx.drawImage(revealedMap.canvas,0,0,W,H);}
+ ctx.drawImage(hazyMap.canvas,0,0,W,H);ctx.drawImage(revealedMap.canvas,0,0,W,H);
+ if(finaleProgress>0){
+  ctx.save();ctx.globalAlpha=finaleProgress*finaleProgress*(3-2*finaleProgress);
+  ctx.drawImage(finalPrint.canvas,0,0,W,H);ctx.restore();
+ }
 }
 function recolor(t,value){
  t.color=value;const match=colors.indexOf(value.toLowerCase());t.colorName=match<0?value.toUpperCase():colorNames[match];
@@ -246,6 +270,7 @@ function drawDrop(t,pos,m){
  ctx.beginPath();ctx.ellipse(3,-2,2.2,.9,-.3,0,Math.PI*2);ctx.fillStyle='#ffffffaa';ctx.fill();ctx.restore();
 }
 function render(){
+ updateFinale();
  const complete=time>=maxTime,cutoff=complete?maxTime:time-100;
  if(cutoff<dryTime)resetPaper();
  while(dryIndex<stamps.length&&stamps[dryIndex].t<=cutoff){const s=stamps[dryIndex++];deposit(s.owner.paper.ctx,s,1);s.owner.paper.ctx.globalAlpha=1;}
@@ -273,8 +298,8 @@ function setPlaying(value){if(animation!==null)cancelAnimationFrame(animation);a
 function frame(now){if(!playing)return;if(last!==null)time=Math.min(maxTime,time+(now-last)/1000*Number(byId('speed').value));last=now;render();if(time>=maxTime)setPlaying(false);else animation=requestAnimationFrame(frame);}
 byId('play').onclick=()=>{showFullMap=false;if(!playing&&time>=maxTime){time=0;resetPaper();}setPlaying(!playing);render();};
 byId('timeline').max=maxTime;byId('total').textContent=fmt(maxTime);
-byId('timeline').oninput=e=>{showFullMap=false;time=Number(e.target.value);setPlaying(false);render();};
+byId('timeline').oninput=e=>{showFullMap=false;time=Number(e.target.value);if(maxTime-time<.1)time=maxTime;setPlaying(false);render();};
 byId('all').onclick=()=>{showFullMap=true;time=maxTime;setPlaying(false);render();};
 byId('bleed').onchange=e=>{spread=Number(e.target.value);resetPaper();render();};
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)setPlaying(false);});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(playing)setPlaying(false);stopFinale();}else render();});
 render();
