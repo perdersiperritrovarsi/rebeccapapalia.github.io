@@ -32,7 +32,7 @@ Due proposte grafiche per i quindici cammini (otto registrati e sette simulati) 
 
 Aprire **index.html** con un browser: è un singolo file autonomo, con dati, stili e codice incorporati. Non richiede installazioni, connessione o server. Il titolo e i testi sono una proposta modificabile.
 
-La pagina inizialmente mostra i percorsi completi. **Avvia** fa ripartire tutte le persone dal tempo relativo 00:00. Si possono mettere in pausa, scorrere il tempo, cambiare velocità (1×–120×), tornare alla vista completa e nascondere singoli percorsi cliccando la legenda. La durata a schermo dipende dalla traccia più lunga e dalla velocità di riproduzione.
+La pagina inchiostro si apre all’istante 00:00: la cartografia è inizialmente tenue e sfocata. Camminando, le presenze svelano gradualmente una fascia dai bordi morbidi di strade e nomi. La carta già scoperta resta leggibile; pausa, riavvio, ricerca temporale e visibilità dei percorsi mantengono coerente anche questa rivelazione. “Mostra tutto” svela l’intera mappa e i percorsi completi. **Avvia** fa ripartire tutte le persone dal tempo relativo 00:00. Si possono mettere in pausa, scorrere il tempo, cambiare velocità (1×–120×), tornare alla vista completa e nascondere singoli percorsi cliccando la legenda. La durata a schermo dipende dalla traccia più lunga e dalla velocità di riproduzione.
 
 ## Variante inchiostro
 

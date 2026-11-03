@@ -52,6 +52,24 @@ cartography_dir = ROOT / 'assets' / 'topography'
 cartography = json.loads((cartography_dir / 'manifest.json').read_text())
 roads = json.loads((ROOT / 'assets' / 'roads' / 'walking-network.geojson').read_text())
 cartography['roads'] = [f['geometry']['coordinates'] for f in roads['features']]
+# Preserve mapped road names beyond the coverage of the cached raster tiles.
+cartography['road_names'] = []
+for feature in roads['features']:
+    name = feature['properties'].get('name')
+    coords = feature['geometry']['coordinates']
+    if not name or len(coords) < 2:
+        continue
+    lengths = [math.hypot((b[0]-a[0])*math.cos(math.radians(a[1])), b[1]-a[1]) for a,b in zip(coords, coords[1:])]
+    total = sum(lengths)
+    remaining = total/2
+    for j, length in enumerate(lengths):
+        if remaining <= length and length > 0:
+            a,b = coords[j],coords[j+1]
+            f = remaining/length
+            cartography['road_names'].append(dict(name=name, at=[a[k]+(b[k]-a[k])*f for k in range(2)], tangent=[a,b], length=total))
+            break
+        remaining -= length
+cartography['road_names'].sort(key=lambda label: label['length'], reverse=True)
 for tile in cartography['tiles']:
     tile['image'] = 'data:image/png;base64,' + base64.b64encode((cartography_dir / tile['file']).read_bytes()).decode('ascii')
 ink = ink.replace('__MAP_DATA__', json.dumps(cartography, separators=(',', ':')))

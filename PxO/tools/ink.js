@@ -59,7 +59,24 @@ function makeStamp(color,seed,stage){
  for(let j=0;j<160;j++){if(rng()<.45)continue;const a=contour[j],b=contour[(j+1)%160];g.beginPath();g.moveTo(...a);g.lineTo(...b);g.strokeStyle=ink(.12+rng()*.23);g.lineWidth=.4+rng()*.7;g.stroke();}
  return c;
 }
-const basemap=layer();
+const basemap=layer(),hazyMap=layer(),revealedMap=layer(),revealMask=layer();
+let revealDirty=true,revealIndex=0,revealTime=-Infinity;
+// Fixed, soft impressions make the reveal independent of playback frame rate.
+const revealBrush=document.createElement('canvas');revealBrush.width=revealBrush.height=128;
+const brushContext=revealBrush.getContext('2d');
+const halo=brushContext.createRadialGradient(64,64,0,64,64,64);
+halo.addColorStop(0,'#ffffffff');halo.addColorStop(.28,'#ffffffdd');
+halo.addColorStop(.65,'#ffffff35');halo.addColorStop(1,'#ffffff00');
+brushContext.fillStyle=halo;brushContext.fillRect(0,0,128,128);
+function resetExploration(){
+ revealMask.ctx.clearRect(0,0,W,H);revealIndex=0;revealTime=-Infinity;revealDirty=true;
+}
+function refreshHazyMap(){
+ const g=hazyMap.ctx;g.save();g.globalCompositeOperation='source-over';g.globalAlpha=1;g.filter='none';
+ g.fillStyle='#f2f2f0';g.fillRect(0,0,W,H);paperMaterial(g);
+ g.globalCompositeOperation='source-over';g.globalAlpha=.16;g.filter='blur(7px)';
+ g.drawImage(basemap.canvas,0,0,W,H);g.restore();revealDirty=true;
+}
 function paperMaterial(g){
  const rng=random(74931);
  // Large, low-contrast stains and local changes of paper density.
@@ -113,7 +130,22 @@ function paintBasemap(tiles=[]){
  }
  g.save();g.globalCompositeOperation='multiply';g.globalAlpha=.54;g.filter='grayscale(1) contrast(.82) brightness(1.17)';
  g.drawImage(raster.canvas,0,0,W,H);
- g.restore();paperMaterial(g);
+ g.restore();
+ // OSM names complement the existing topographic labels, never inventing places.
+ const labelBoxes=[],named=new Set();g.save();g.font='8px system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineJoin='round';
+ const coverage=bounds.length?{left:Math.min(...bounds.map(p=>p[0])),right:Math.max(...bounds.map(p=>p[0])),top:Math.min(...bounds.map(p=>p[1])),bottom:Math.max(...bounds.map(p=>p[1]))}:null;
+ for(const label of cartography.road_names){
+  const [lon,lat]=label.at,[x,y]=xy([0,lat,lon]);
+  if(x<35||x>W-35||y<35||y>H-35||named.has(label.name))continue;
+  if(coverage&&x>coverage.left-15&&x<coverage.right+15&&y>coverage.top-15&&y<coverage.bottom+15)continue;
+  const width=g.measureText(label.name).width;
+  if(width>170||labelBoxes.some(p=>Math.abs(p.x-x)<(p.width+width)/2+12&&Math.abs(p.y-y)<28))continue;
+  const [a,b]=label.tangent.map(([lo,la])=>xy([0,la,lo]));let angle=Math.atan2(b[1]-a[1],b[0]-a[0]);
+  if(angle>Math.PI/2)angle-=Math.PI;if(angle<-Math.PI/2)angle+=Math.PI;
+  g.save();g.translate(x,y);g.rotate(angle);g.strokeStyle='#f2f2f0';g.lineWidth=3;g.strokeText(label.name,0,-5);g.fillStyle='#727772';g.fillText(label.name,0,-5);g.restore();
+  labelBoxes.push({x,y,width});named.add(label.name);
+ }
+ g.restore();paperMaterial(g);refreshHazyMap();
 }
 paintBasemap();
 Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
@@ -121,11 +153,21 @@ Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
 }))).then(tiles=>{paintBasemap(tiles);byId('map-status').textContent='';render();}).catch(()=>{byId('map-status').textContent=' · Impossibile leggere la base cartografica';});
 const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 const maxTime=Math.max(...data.map(t=>t.duration));
-let time=maxTime,playing=false,animation=null,last=null,spread=1,dryIndex=0,dryTime=-Infinity;
-const stamps=[];
+let time=0,showFullMap=false,playing=false,animation=null,last=null,spread=1,dryIndex=0,dryTime=-Infinity;
+const stamps=[],revealEvents=[];
 data.forEach((t,i)=>{
  t.color=colors[i];t.colorName=colorNames[i];t.paletteIndex=i;t.visible=true;t.paper=layer();t.parts=t.segments.map(points=>({points,coords:points.map(xy)}));
  t.sprites=Array.from({length:9},(_,j)=>Array.from({length:3},(_,stage)=>makeStamp(t.color,i*101+j+1,stage)));
+ // Keep segment boundaries: no cartography is revealed across gaps in a GPX.
+ for(const part of t.parts){
+  let previous=null,lastTime=-Infinity;
+  part.points.forEach((p,j)=>{
+   const pos=part.coords[j];
+   if(!previous||Math.hypot(pos[0]-previous[0],pos[1]-previous[1])>=1.5||p[0]-lastTime>=10||j===part.points.length-1){
+    revealEvents.push({t:p[0],x:pos[0],y:pos[1],owner:t});previous=pos;lastTime=p[0];
+   }
+  });
+ }
  const rng=random(321+i*793);
  for(const part of t.parts){let prev=null,prevTime=-Infinity;part.points.forEach((p,j)=>{
   const pos=part.coords[j];
@@ -141,13 +183,29 @@ data.forEach((t,i)=>{
  picker.addEventListener('input',()=>{clearTimeout(recolorTimer);recolorTimer=setTimeout(applyColor,100);});picker.addEventListener('change',applyColor);
 });
 stamps.sort((a,b)=>a.t-b.t);
+revealEvents.sort((a,b)=>a.t-b.t);
+function drawCartography(){
+ if(time<revealTime)resetExploration();
+ while(revealIndex<revealEvents.length&&revealEvents[revealIndex].t<=time){
+  const event=revealEvents[revealIndex++];
+  if(event.owner.visible){revealMask.ctx.drawImage(revealBrush,event.x-36,event.y-36,72,72);revealDirty=true;}
+ }
+ revealTime=time;
+ if(revealDirty){
+  const g=revealedMap.ctx;g.save();g.globalCompositeOperation='source-over';g.clearRect(0,0,W,H);
+  g.drawImage(basemap.canvas,0,0,W,H);g.globalCompositeOperation='destination-in';
+  g.drawImage(revealMask.canvas,0,0,W,H);g.restore();revealDirty=false;
+ }
+ if(showFullMap)ctx.drawImage(basemap.canvas,0,0,W,H);
+ else{ctx.drawImage(hazyMap.canvas,0,0,W,H);ctx.drawImage(revealedMap.canvas,0,0,W,H);}
+}
 function recolor(t,value){
  t.color=value;const match=colors.indexOf(value.toLowerCase());t.colorName=match<0?value.toUpperCase():colorNames[match];
  t.button.style.setProperty('--color',value);t.colorLabel.textContent=`${t.id} · ${t.colorName}`;
  t.sprites=Array.from({length:9},(_,j)=>Array.from({length:3},(_,stage)=>makeStamp(value,t.paletteIndex*101+j+1,stage)));
  resetPaper();render();
 }
-function resetPaper(){for(const t of data)t.paper.ctx.clearRect(0,0,W,H);dryIndex=0;dryTime=-Infinity;}
+function resetPaper(){resetExploration();for(const t of data)t.paper.ctx.clearRect(0,0,W,H);dryIndex=0;dryTime=-Infinity;}
 function deposit(g,s,maturity){
  const r=s.radius*spread;
  g.save();g.translate(s.x,s.y);g.rotate(s.angle);g.scale(1,s.aspect);
@@ -178,7 +236,7 @@ function render(){
  if(cutoff<dryTime)resetPaper();
  while(dryIndex<stamps.length&&stamps[dryIndex].t<=cutoff){const s=stamps[dryIndex++];deposit(s.owner.paper.ctx,s,1);s.owner.paper.ctx.globalAlpha=1;}
  dryTime=cutoff;dryCtx.globalAlpha=1;
- ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);ctx.globalCompositeOperation='source-over';ctx.drawImage(basemap.canvas,0,0,W,H);
+ ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);ctx.globalCompositeOperation='source-over';drawCartography();
  ctx.globalCompositeOperation='multiply';
  // Source-over within each pigment preserves its hue; multiply between
  // people creates mixtures without blackening a single person's long pauses.
@@ -199,10 +257,10 @@ function render(){
 }
 function setPlaying(value){if(animation!==null)cancelAnimationFrame(animation);animation=null;playing=value;last=null;byId('play').textContent=playing?'Ⅱ Pausa':time>=maxTime?'▶ Avvia':'▶ Riprendi';if(playing)animation=requestAnimationFrame(frame);}
 function frame(now){if(!playing)return;if(last!==null)time=Math.min(maxTime,time+(now-last)/1000*Number(byId('speed').value));last=now;render();if(time>=maxTime)setPlaying(false);else animation=requestAnimationFrame(frame);}
-byId('play').onclick=()=>{if(!playing&&time>=maxTime){time=0;resetPaper();}setPlaying(!playing);render();};
+byId('play').onclick=()=>{showFullMap=false;if(!playing&&time>=maxTime){time=0;resetPaper();}setPlaying(!playing);render();};
 byId('timeline').max=maxTime;byId('total').textContent=fmt(maxTime);
-byId('timeline').oninput=e=>{time=Number(e.target.value);setPlaying(false);render();};
-byId('all').onclick=()=>{time=maxTime;setPlaying(false);render();};
+byId('timeline').oninput=e=>{showFullMap=false;time=Number(e.target.value);setPlaying(false);render();};
+byId('all').onclick=()=>{showFullMap=true;time=maxTime;setPlaying(false);render();};
 byId('bleed').onchange=e=>{spread=Number(e.target.value);resetPaper();render();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)setPlaying(false);});
 render();
