@@ -136,3 +136,21 @@ in circa tre secondi reali, indipendentemente dalla velocità di riproduzione.
 Solo i bordi esterni restano sfumati sulla carta; la grana e i pigmenti rimangono.
 Riavviando o tornando indietro nel tempo si ripristina la rivelazione locale.
 Con la preferenza di movimento ridotto la stampa finale appare senza animazione.
+
+## Zoom ed esplorazione dei luoghi
+
+Nelle tre viste a inchiostro: rotella e pinch ingrandiscono attorno al cursore
+(da 1× a 6×); trascinamento e gesti a due dita spostano l'inquadratura.
+I pulsanti +, − e Vista intera offrono gli stessi comandi. Da tastiera sulla
+mappa: +/−, frecce, 0; Invio apre una presenza, Escape chiude la scheda.
+La scala e il nord restano riferimenti fissi; la barra da 250 m si adatta allo zoom.
+
+Una goccia o il pulsante ⌖ nella legenda apre la scheda del luogo. Le coordinate
+seguono il tempo corrente della traccia e la scelta della presenza distingue
+anche gli ID omonimi in PxO. I punti d'arrivo sono indicati quando si ingrandisce.
+Google Maps e Street View si aprono soltanto cliccando i collegamenti esterni:
+nessuna fotografia viene inventata, nessuna richiesta a Google avviene durante
+la riproduzione e non serve una chiave API. Street View dipende dalla copertura;
+le immagini disponibili possono appartenere a un altro momento.
+Lo zoom usa la cartografia incorporata: non aggiunge nuove tessere o dettaglio
+fotografico alle immagini raster esistenti. La geometria delle strade resta allineata ai percorsi durante zoom e spostamenti.
