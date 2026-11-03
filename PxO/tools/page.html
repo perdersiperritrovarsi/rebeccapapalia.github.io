@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f2f0e8">
+<title>Perdersi, ritrovarsi — Otto percorsi</title>
+<style>
+:root{--paper:#f2f0e8;--ink:#292d2b;--muted:#70736b;--line:#d3d4c9;--accent:#bd4d32}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,Helvetica,sans-serif}button,select,input{font:inherit}button,select{color:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:4px}header{padding:30px 4vw 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:end;gap:24px}.eyebrow{font-size:10px;letter-spacing:.19em;text-transform:uppercase;color:var(--muted);margin:0 0 16px}h1{font:normal clamp(34px,4vw,60px)/1.05 Georgia,serif;letter-spacing:-.045em;margin:0}h1 em{font-weight:normal;color:var(--accent)}.intro{font-size:13px;line-height:1.6;max-width:305px;margin:0;color:var(--muted)}main{display:grid;grid-template-columns:minmax(0,1fr) 270px;margin:0 4vw}.drawing{position:relative;border-right:1px solid var(--line);min-width:0}.drawing-head{position:absolute;top:25px;left:0;z-index:1;pointer-events:none}.small{font:10px/1.5 monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.drawing-head p{margin:0 0 5px}.drawing-head strong{font:normal 15px Georgia,serif}.map{display:block;width:100%;height:clamp(360px,58vh,680px)}.grid{stroke:#dedfd5;stroke-width:.7}.route{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.marker{stroke:var(--paper);stroke-width:2;vector-effect:non-scaling-stroke}.map text{font:10px monospace;fill:var(--muted)}aside{padding:26px 0 16px 28px}aside h2{font:normal 23px Georgia,serif;margin:8px 0 10px}aside>p{font-size:12px;line-height:1.6;color:var(--muted);margin:0 0 20px}.track{width:100%;display:grid;grid-template-columns:12px 1fr auto;align-items:center;column-gap:10px;border:0;border-top:1px solid var(--line);padding:12px 0;background:none;text-align:left}.track:last-child{border-bottom:1px solid var(--line)}.swatch{width:8px;height:8px;border-radius:50%;background:var(--color)}.track-name{font-size:12px;letter-spacing:.06em}.track-meta{font:10px monospace;color:var(--muted);display:block;margin-top:5px;letter-spacing:0}.status{font:9px monospace;text-transform:uppercase;color:var(--muted)}.track[aria-pressed=false]{opacity:.35}.track[aria-pressed=false] .swatch{background:transparent;border:1px solid var(--color)}.legend-note{font-size:10px;margin-top:14px;color:var(--muted);line-height:1.6}.transport{grid-column:1/-1;border-top:1px solid var(--line);padding:23px 0;display:grid;grid-template-columns:125px minmax(100px,1fr) auto;gap:25px;align-items:center}.play{border:1px solid var(--ink);border-radius:2px;background:var(--ink);color:var(--paper);height:44px;font-size:12px}.timeline-labels{display:flex;justify-content:space-between;font:11px monospace;color:var(--muted);margin-bottom:9px}.timeline-labels output{color:var(--ink)}input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;margin:0;display:block}.options{display:flex;align-items:center;gap:14px;font-size:11px}.options select{border:0;border-bottom:1px solid var(--line);background:transparent;padding:8px 2px}.all{background:none;border:0;border-bottom:1px solid var(--ink);padding:8px 0;font-size:11px}footer{border-top:1px solid var(--line);margin:0 4vw;padding:22px 0 30px;display:grid;grid-template-columns:1fr 1fr;gap:40px}footer p{font-size:11px;color:var(--muted);line-height:1.7;margin:0;max-width:540px}footer strong{font-weight:normal;color:var(--ink)}@media(min-width:1600px){main,footer{max-width:1500px;margin:auto}header{padding-left:max(4vw,calc((100vw - 1500px)/2));padding-right:max(4vw,calc((100vw - 1500px)/2))}}@media(max-width:760px){header{display:block;padding-top:25px}.intro{margin-top:18px;max-width:460px}main{grid-template-columns:1fr}.drawing{border-right:0}.map{height:420px}.drawing-head{top:16px}aside{border-top:1px solid var(--line);padding:20px 0}.tracks{display:grid;grid-template-columns:1fr 1fr;column-gap:25px}aside>p{margin-bottom:12px}.track{padding:10px 0}.transport{grid-row:2;grid-template-columns:90px minmax(0,1fr);gap:18px}.options{grid-column:1/-1;justify-content:space-between}footer{grid-template-columns:1fr;gap:14px}h1{font-size:41px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header><div><p class="eyebrow">Studio sui percorsi · 01 / Otto persone</p><h1>Perdersi, <em>ritrovarsi.</em></h1></div><p class="intro">Otto cammini, un unico tempo di partenza.<br>Una traccia comune da cui allontanarsi,<br>ognuno con il proprio passo.</p></header>
+<main>
+<section class="drawing" aria-label="Rappresentazione geografica degli otto percorsi"><div class="drawing-head"><p class="small">Geografie di un incontro</p><strong id="viewLabel">Tutte le tracce</strong></div><svg id="map" class="map" viewBox="0 0 1000 620" role="img" aria-labelledby="mapTitle mapDesc"><title id="mapTitle">Otto percorsi a partire dallo stesso istante</title><desc id="mapDesc">Tracce GPS in posizione geografica reale, con nord in alto. Usa i controlli temporali per seguire il cammino delle otto persone.</desc></svg></section>
+<aside><div class="small">L'atlante dei passi</div><h2>Otto presenze</h2><p>Lo stesso inizio nel tempo.<br>Otto modi di attraversare lo spazio.</p><div id="tracks" class="tracks"></div><p class="legend-note">Seleziona una presenza per nascondere o mostrare la sua traccia. Le distanze sono stimate dai punti GPS.</p></aside>
+<section class="transport" aria-label="Controlli di riproduzione"><button class="play" id="play">▶ Avvia</button><div><div class="timeline-labels"><label for="timeline">Tempo trascorso <output id="elapsed">00:00</output></label><span id="total"></span></div><input id="timeline" type="range" min="0" step="0.1" value="0" aria-label="Tempo trascorso dalla partenza comune"></div><div class="options"><label>Velocità <select id="speed"><option value="1">1× · reale</option><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option><option value="120">120×</option></select></label><button class="all" id="all">Mostra tutto ↗</button></div></section>
+</main>
+<footer><p><strong>Un tempo condiviso.</strong> L'orario iniziale di ogni registrazione diventa 00:00. Durate e intervalli tra i punti restano quelli dei GPX: chi conclude prima si ferma, mentre gli altri proseguono. Gli spostamenti tra punti registrati sono interpolati.</p><p><strong>Una geografia reale.</strong> Le partenze sono vicine, ma non sovrapposte artificialmente. Nord in alto, proporzioni locali in metri; nessuna mappa di sfondo. Dati incorporati in questa pagina: funziona anche offline.</p></footer>
+<script id="data" type="application/json">__TRACK_DATA__</script>
+<script>
+'use strict';
+const data=JSON.parse(document.getElementById('data').textContent);
+const colors=['#b94932','#386d83','#90802e','#855f93','#cf773b','#3e826b','#4862a7','#a14d72'];
+const svg=document.getElementById('map'), ns='http://www.w3.org/2000/svg';
+const byId=id=>document.getElementById(id);
+function el(tag,attrs,parent=svg){const n=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,v);parent.appendChild(n);return n;}
+const allPoints=data.flatMap(t=>t.segments.flat()), lat0=allPoints.reduce((s,p)=>s+p[1],0)/allPoints.length;
+const project=p=>[p[2]*Math.cos(lat0*Math.PI/180)*Math.PI/180*6371000,-p[1]*Math.PI/180*6371000];
+const projected=allPoints.map(project),xs=projected.map(p=>p[0]),ys=projected.map(p=>p[1]);
+const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+const scale=Math.min(870/(maxX-minX),410/(maxY-minY));
+const offsetX=(1000-(maxX-minX)*scale)/2,offsetY=120+(410-(maxY-minY)*scale)/2;
+function xy(p){const [x,y]=project(p);return [offsetX+(x-minX)*scale,offsetY+(y-minY)*scale];}
+const grid=el('g',{'aria-hidden':'true'});
+for(let x=Math.ceil(minX/250)*250;x<=maxX;x+=250){let a=offsetX+(x-minX)*scale;el('line',{x1:a,x2:a,y1:100,y2:550,class:'grid'},grid);}
+for(let y=Math.ceil(minY/250)*250;y<=maxY;y+=250){let a=offsetY+(y-minY)*scale;el('line',{x1:45,x2:955,y1:a,y2:a,class:'grid'},grid);}
+el('path',{d:'M 940 75 L 940 35 M 935 43 L 940 35 L 945 43',stroke:'#70736b',fill:'none'});el('text',{x:940,y:25,'text-anchor':'middle'}).textContent='N';
+const bar=250*scale;el('path',{d:`M 55 570 v 5 h ${bar} v -5`,stroke:'#70736b',fill:'none'});el('text',{x:55,y:596}).textContent='250 m';
+const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+const maxTime=Math.max(...data.map(t=>t.duration));let time=maxTime,playing=false,last=null,animation=null;
+const routeLayer=el('g',{}), markerLayer=el('g',{});
+data.forEach((t,i)=>{
+ t.color=colors[i];t.visible=true;t.group=el('g',{},routeLayer);t.markerGroup=el('g',{},markerLayer);
+ t.parts=t.segments.map(points=>{const p=points.map(xy),d=p.map((v,j)=>(j?'L':'M')+v.map(n=>n.toFixed(2)).join(',')).join(' ');el('path',{d,stroke:t.color,'stroke-width':1.5,opacity:.2,class:'route'},t.group);const path=el('path',{d:'',stroke:t.color,'stroke-width':2.3,class:'route'},t.group);return {points,xy:p,path};});
+ t.dot=el('circle',{r:5,fill:t.color,class:'marker'},t.markerGroup);
+ t.label=el('text',{'font-size':11,fill:t.color},t.markerGroup);t.label.textContent=t.id;
+ const button=document.createElement('button');button.type='button';button.className='track';button.style.setProperty('--color',t.color);button.setAttribute('aria-pressed','true');button.setAttribute('aria-label',`Mostra o nascondi il percorso ${t.id}`);
+ button.innerHTML=`<span class="swatch"></span><span class="track-name">${t.id}<span class="track-meta">${(t.distance/1000).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})} km · ${fmt(t.duration)}</span></span><span class="status"></span>`;
+ t.status=button.querySelector('.status');button.onclick=()=>{t.visible=!t.visible;button.setAttribute('aria-pressed',String(t.visible));t.group.style.display=t.visible?'':'none';t.markerGroup.style.display=t.visible?'':'none';render();};byId('tracks').appendChild(button);
+});
+function render(){
+ byId('elapsed').textContent=fmt(time);byId('timeline').value=time;byId('timeline').setAttribute('aria-valuetext',fmt(time));byId('viewLabel').textContent=time>=maxTime?'Tutte le tracce':time===0?'L’istante della partenza':'I percorsi prendono forma';
+ for(const t of data){let pos=t.parts[0].xy[0];for(const part of t.parts){let count=0;while(count<part.points.length&&part.points[count][0]<=time)count++;let visible=part.xy.slice(0,count);if(count>0){pos=part.xy[count-1];if(count<part.points.length){const start=part.points[count-1][0],end=part.points[count][0],fraction=end===start?1:(time-start)/(end-start);pos=part.xy[count-1].map((v,k)=>v+(part.xy[count][k]-v)*fraction);visible.push(pos);}}part.path.setAttribute('d',visible.map((v,j)=>(j?'L':'M')+v.join(',')).join(' '));}
+ t.dot.setAttribute('cx',pos[0]);t.dot.setAttribute('cy',pos[1]);t.label.setAttribute('x',pos[0]+9);t.label.setAttribute('y',pos[1]+(data.indexOf(t)%2?16:-9));t.label.style.display=time>=t.duration?'':'none';t.status.textContent=!t.visible?'nascosto':time>=t.duration?'arrivo':time===0?'partenza':'in cammino';}
+}
+function setPlaying(value){if(animation!==null)cancelAnimationFrame(animation);animation=null;playing=value;last=null;byId('play').textContent=playing?'Ⅱ Pausa':time>=maxTime?'▶ Avvia':'▶ Riprendi';if(playing)animation=requestAnimationFrame(frame);}
+function frame(now){if(!playing)return;if(last!==null)time=Math.min(maxTime,time+(now-last)/1000*Number(byId('speed').value));last=now;render();if(time>=maxTime)setPlaying(false);else animation=requestAnimationFrame(frame);}
+byId('play').onclick=()=>{if(!playing&&time>=maxTime)time=0;setPlaying(!playing);render();};
+byId('timeline').max=maxTime;byId('total').textContent=fmt(maxTime);
+byId('timeline').oninput=e=>{time=Number(e.target.value);setPlaying(false);render();};
+byId('all').onclick=()=>{time=maxTime;setPlaying(false);render();};
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)setPlaying(false);});
+render();
+</script>
+</body>
+</html>
