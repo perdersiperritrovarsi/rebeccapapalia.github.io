@@ -1,3 +1,22 @@
+## Aggiornamento: leggibilità, guida e stampa ad alta risoluzione
+
+Versione precedente recuperabile: `d9f9e74` (codice del sito `2d829fd`).
+In Incontro i depositi vengono riuniti in due film traslucidi, uno per serie;
+la miscelazione multiply fra i due film usa opacità 0.82. Questo conserva
+la distinzione cromatica e alleggerisce gli accumuli senza modificare i GPX.
+La guida “Esplora il progetto” raccoglie le istruzioni; rimangono una frase
+di apertura e, dopo la dissolvenza finale, “Ogni incontro lascia una geografia.”
+
+L'esportazione offre JPEG o PNG e due qualità: Schermo (1600×1146 px) e
+Stampa (4000×2865 px, metadati 300 dpi, circa 33.9×24.3 cm a tale densità).
+PNG preserva i pixel senza compressione con perdita. La versione Stampa
+ridisegna rete stradale, testi, materia della carta e pigmenti su una superficie
+4000 px; non è un semplice ingrandimento della schermata. Le tessere raster
+OpenTopoMap conservano il dettaglio della fonte, non vengono inventati dettagli.
+Colori, visibilità e diffusione sono acquisiti all'avvio del download. La versione
+Stampa lavora separatamente dalla scena interattiva, senza spostare la timeline.
+Il nome resta Cartografia_PerdersiPerRitrovarsi.jpg (o .png).
+
 ## Nome del sito e terza vista
 
 Il titolo del sito resta **Perdersi, ritrovarsi**. Il terzo menu si chiama

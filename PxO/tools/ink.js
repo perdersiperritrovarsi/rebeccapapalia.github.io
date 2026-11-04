@@ -25,8 +25,8 @@ const xy=p=>{const [x,y]=project(p);return [ox+(x-minX)*scale,oy+(y-minY)*scale]
 function random(seed){return ()=>{seed|=0;seed=seed+0x6D2B79F5|0;let a=Math.imul(seed^seed>>>15,1|seed);a=a+Math.imul(a^a>>>7,61|a)^a;return ((a^a>>>14)>>>0)/4294967296;};}
 // Fractal blooms and branching capillaries, generated locally and reproducibly.
 // The three stages have different extents: pigment spreads unevenly, not as a disk.
-function makeStamp(color,seed,stage){
- const c=document.createElement('canvas');c.width=c.height=192;const g=c.getContext('2d'),rng=random(seed);
+function makeStamp(color,seed,stage,quality=1){
+ const c=document.createElement('canvas');c.width=c.height=192*quality;const g=c.getContext('2d'),rng=random(seed);g.scale(quality,quality);
  const rgb=color.match(/\w\w/g).map(s=>parseInt(s,16)),ink=a=>`rgba(${rgb.join(',')},${a})`;
  const lobes=Array.from({length:9},()=>({angle:rng()*Math.PI*2,width:.12+rng()*.35,height:9+rng()*29}));
  const phase=rng()*6.28, stretch=.65+rng()*.65;
@@ -59,7 +59,7 @@ function makeStamp(color,seed,stage){
  g.globalCompositeOperation='destination-out';for(let j=0;j<100;j++){g.globalAlpha=.12+rng()*.4;g.fillRect(30+rng()*132,30+rng()*132,1+rng()*2,.3+rng()*1.2);}g.restore();
  // Broken tide marks, never a uniform outline.
  for(let j=0;j<160;j++){if(rng()<.45)continue;const a=contour[j],b=contour[(j+1)%160];g.beginPath();g.moveTo(...a);g.lineTo(...b);g.strokeStyle=ink(.12+rng()*.23);g.lineWidth=.4+rng()*.7;g.stroke();}
- if(experience.combined){
+ if(experience.combined&&quality===1){
   const small=document.createElement('canvas');small.width=small.height=128;small.getContext('2d').drawImage(c,0,0,128,128);return small;
  }
  return c;
@@ -120,11 +120,11 @@ function paperMaterial(g){
  const edge=g.createRadialGradient(W/2,H/2,230,W/2,H/2,610);edge.addColorStop(0,'#72502400');edge.addColorStop(1,'#786f6315');g.fillStyle=edge;g.fillRect(0,0,W,H);
 }
 const cartography=JSON.parse(byId('cartography').textContent);
-let cartographyReady=false;
-function paintBasemap(tiles=[]){
- const g=basemap.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f2f2f2';g.fillRect(0,0,W,H);
+let cartographyReady=false,cachedTiles=[];
+function paintBasemap(tiles=[],target=basemap){
+ const ratio=target.canvas.width/W,g=target.ctx;g.clearRect(0,0,W,H);g.fillStyle='#f2f2f2';g.fillRect(0,0,W,H);
  // Feather the original topographic coverage into the wider road network.
- const raster=layer(),rg=raster.ctx,bounds=[];
+ const raster=layer(ratio),rg=raster.ctx,bounds=[];
  for(const tile of tiles){
   const n=2**tile.z,lon=x=>x/n*360-180,lat=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;
   const a=xy([0,lat(tile.y),lon(tile.x)]),b=xy([0,lat(tile.y+1),lon(tile.x+1)]);
@@ -142,7 +142,7 @@ function paintBasemap(tiles=[]){
  g.drawImage(raster.canvas,0,0,W,H);
  g.restore();
  // An independent ink plate keeps the paper grain out of the moving pigments.
- const plate=layer(),ink=plate.ctx,rng=random(92841);
+ const plate=layer(ratio),ink=plate.ctx,rng=random(92841);
  ink.lineCap='round';ink.lineJoin='round';
  for(const road of cartography.roads){
   const major=['primary','primary_link','secondary','secondary_link','tertiary','tertiary_link'].includes(road.kind);
@@ -177,12 +177,13 @@ function paintBasemap(tiles=[]){
   ink.beginPath();ink.moveTo(x,y);ink.quadraticCurveTo(x+1.5,y-.6,x+2+rng()*3,y+(rng()-.5)*1.7);ink.stroke();
  }
  ink.restore();g.save();g.globalCompositeOperation='multiply';g.drawImage(plate.canvas,0,0,W,H);g.restore();
- paperMaterial(g);monochromeSurface(g);refreshHazyMap();
+ paperMaterial(g);monochromeSurface(g);if(target===basemap)refreshHazyMap();
+ raster.canvas.width=plate.canvas.width=1;
 }
 paintBasemap();
 Promise.all(cartography.tiles.map(tile=>new Promise((resolve,reject)=>{
  const bitmap=new Image();bitmap.onload=()=>resolve({...tile,bitmap});bitmap.onerror=()=>reject(new Error('Tessera incorporata non leggibile'));bitmap.src=tile.image;
-}))).then(tiles=>{paintBasemap(tiles);cartographyReady=true;byId('export-jpeg').disabled=false;byId('map-status').textContent='';render();}).catch(()=>{byId('map-status').textContent=' · Impossibile leggere la base cartografica';});
+}))).then(tiles=>{cachedTiles=tiles;paintBasemap(tiles);cartographyReady=true;byId('export-jpeg').disabled=false;byId('map-status').textContent='';render();}).catch(()=>{byId('map-status').textContent=' · Impossibile leggere la base cartografica';});
 const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 const maxTime=Math.max(...data.map(t=>t.duration));
 let time=0,showFullMap=false,playing=false,animation=null,last=null,spread=.65,dryIndex=0,dryTime=-Infinity;
@@ -229,6 +230,8 @@ data.forEach((t,i)=>{
  picker.addEventListener('input',()=>{clearTimeout(recolorTimer);recolorTimer=setTimeout(applyColor,100);});picker.addEventListener('change',applyColor);
 });
 stamps.sort((a,b)=>a.t-b.t);
+for(const t of data)t.stamps=stamps.filter(s=>s.owner===t);
+const pigmentFamilies=experience.combined?[...new Set(data.map(t=>t.series))].map(name=>({name,layer:layer()})):[];
 revealEvents.sort((a,b)=>a.t-b.t);
 function drawCartography(){
  if(time<revealTime)resetExploration();
@@ -255,8 +258,8 @@ function recolor(t,value){
  resetPaper();render();
 }
 function resetPaper(){resetExploration();for(const t of data)t.paper.ctx.clearRect(0,0,W,H);dryIndex=0;dryTime=-Infinity;}
-function deposit(g,s,maturity){
- const r=s.radius*spread;
+function deposit(g,s,maturity,diffusion=spread){
+ const r=s.radius*diffusion;
  g.save();g.translate(s.x,s.y);g.rotate(s.angle);g.scale(1,s.aspect);
  // Crossfade fixed irregular fronts, rather than uniformly enlarging a circle.
  const phase=maturity*2,lo=Math.floor(phase),hi=Math.min(2,lo+1),f=phase-lo;
@@ -368,12 +371,15 @@ function render(){
  dryTime=cutoff;dryCtx.globalAlpha=1;
  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.zoom,view.zoom);ctx.globalCompositeOperation='source-over';drawCartography();
  ctx.globalCompositeOperation='multiply';
- // Source-over within each pigment preserves its hue; multiply between
- // people creates mixtures without blackening a single person's long pauses.
+ // In Incontro, each family builds one translucent film. Two films mix
+ // without multiplying thirty opaque deposits into a black mass.
+ for(const family of pigmentFamilies){family.layer.ctx.clearRect(0,0,W,H);family.layer.ctx.globalCompositeOperation='source-over';}
  for(const t of data){if(!t.visible)continue;dryCtx.clearRect(0,0,W,H);dryCtx.globalAlpha=1;dryCtx.globalCompositeOperation='source-over';dryCtx.drawImage(t.paper.canvas,0,0,W,H);
-  for(let j=dryIndex;j<stamps.length&&stamps[j].t<=time;j++){const s=stamps[j];if(s.owner===t)deposit(dryCtx,s,Math.min(1,Math.sqrt((time-s.t)/100)));}
-  ctx.drawImage(dry,0,0,W,H);
+  for(const stamp of t.stamps){if(stamp.t>time)break;if(stamp.t>cutoff)deposit(dryCtx,stamp,Math.min(1,Math.sqrt((time-stamp.t)/100)));}
+  if(experience.combined)pigmentFamilies.find(f=>f.name===t.series).layer.ctx.drawImage(dry,0,0,W,H);
+  else ctx.drawImage(dry,0,0,W,H);
  }
+ if(experience.combined){ctx.globalAlpha=.82;for(const family of pigmentFamilies)ctx.drawImage(family.layer.canvas,0,0,W,H);}
  ctx.globalAlpha=1;
  for(const t of data){
   const arrived=time>=t.duration,m=motion(t),pos=position(t);
@@ -386,6 +392,7 @@ function render(){
  if(selectedTrack&&selectedTrack.visible){const p=position(selectedTrack);ctx.save();ctx.globalCompositeOperation='source-over';ctx.strokeStyle='#222';ctx.lineWidth=1.4/view.zoom;ctx.beginPath();ctx.arc(p[0],p[1],15/view.zoom,0,Math.PI*2);ctx.stroke();ctx.restore();}
  ctx.restore();updatePlace();
  ctx.globalCompositeOperation='source-over';ctx.fillStyle='#555555';ctx.strokeStyle='#777777';ctx.lineWidth=.6;ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText('N',942,55);ctx.beginPath();ctx.moveTo(942,64);ctx.lineTo(942,91);ctx.moveTo(938,70);ctx.lineTo(942,64);ctx.lineTo(946,70);ctx.stroke();ctx.textAlign='left';ctx.beginPath();ctx.moveTo(55,563);ctx.lineTo(55,568);ctx.lineTo(55+250*scale*view.zoom,568);ctx.lineTo(55+250*scale*view.zoom,563);ctx.stroke();ctx.fillText('250 m',55,589);
+ byId('closing-phrase').hidden=!(time>=maxTime&&finaleProgress>=1);
  byId('elapsed').textContent=fmt(time);byId('timeline').value=time;byId('timeline').setAttribute('aria-valuetext',fmt(time));byId('viewLabel').textContent=complete?'Ciò che resta sulla carta':time===0?'Prima della prima goccia':'Il colore incontra la carta';
 }
 function setPlaying(value){if(animation!==null)cancelAnimationFrame(animation);animation=null;playing=value;last=null;byId('play').textContent=playing?'Ⅱ Pausa':time>=maxTime?'▶ Avvia':'▶ Riprendi';if(playing)animation=requestAnimationFrame(frame);}
@@ -416,19 +423,75 @@ function finalPrintSnapshot(){
   if(!saved.playing)byId('play').textContent=saved.playLabel;
  }
 }
+async function highResolutionPrint(ratio,status){
+ const diffusion=spread,visible=data.filter(t=>t.visible).map(t=>({source:t,color:t.color,series:t.series,paletteIndex:t.paletteIndex}));
+ const art=layer(ratio),pigment=layer(ratio),film=experience.combined?layer(ratio):null;
+ try{
+  status.textContent='Ridisegno la cartografia per la stampa…';await new Promise(requestAnimationFrame);
+  paintBasemap(cachedTiles,art);
+  const g=art.ctx;g.save();g.globalCompositeOperation='destination-in';
+  for(const [x0,y0,x1,y1] of [[0,0,55,0],[W,0,W-55,0],[0,0,0,32],[0,H,0,H-32]]){const fade=g.createLinearGradient(x0,y0,x1,y1);fade.addColorStop(0,'#0000');fade.addColorStop(1,'#000');g.fillStyle=fade;g.fillRect(0,0,W,H);}g.restore();
+  let finished=0;
+  const families=experience.combined?[...new Set(visible.map(t=>t.series))]:[null];
+  for(const family of families){
+   if(film){film.ctx.clearRect(0,0,W,H);film.ctx.globalCompositeOperation='source-over';}
+   for(const t of visible.filter(t=>family===null||t.series===family)){
+    status.textContent=`Ridisegno i pigmenti · ${++finished}/${visible.length}`;await new Promise(requestAnimationFrame);
+    const sprites=Array.from({length:9},(_,j)=>[null,null,makeStamp(t.color,t.paletteIndex*101+j+1,2,2)]),owner={sprites};
+    const ink=pigment.ctx;ink.globalCompositeOperation='source-over';ink.globalAlpha=1;ink.clearRect(0,0,W,H);
+    for(const stamp of t.source.stamps)deposit(ink,{...stamp,owner},1,diffusion);
+    if(film)film.ctx.drawImage(pigment.canvas,0,0,W,H);
+    else{g.globalCompositeOperation='multiply';g.drawImage(pigment.canvas,0,0,W,H);}
+    for(const sprite of sprites)sprite[2].width=1;
+   }
+   if(film){g.save();g.globalCompositeOperation='multiply';g.globalAlpha=.82;g.drawImage(film.canvas,0,0,W,H);g.restore();}
+  }
+  g.globalCompositeOperation='source-over';g.fillStyle='#555';g.strokeStyle='#777';g.lineWidth=.6;g.font='10px monospace';g.textAlign='center';g.fillText('N',942,55);g.beginPath();g.moveTo(942,64);g.lineTo(942,91);g.moveTo(938,70);g.lineTo(942,64);g.lineTo(946,70);g.stroke();g.textAlign='left';g.beginPath();g.moveTo(55,563);g.lineTo(55,568);g.lineTo(55+250*scale,568);g.lineTo(55+250*scale,563);g.stroke();g.fillText('250 m',55,589);
+  const output=document.createElement('canvas'),factor=ratio/DPR,top=76*factor,bottom=78*factor;output.width=W*ratio;output.height=H*ratio+top+bottom;
+  const out=output.getContext('2d');out.fillStyle='#f2f2f2';out.fillRect(0,0,output.width,output.height);out.drawImage(art.canvas,0,top);
+  out.scale(factor,factor);out.fillStyle='#171717';out.font='italic 30px Georgia,serif';out.fillText('Perdersi, ritrovarsi',32,44);out.font='15px Arial,sans-serif';out.textAlign='right';out.fillText(experience.name,1600-32,43);out.textAlign='left';
+  out.font='13px Arial,sans-serif';out.fillStyle='#444';out.fillText('Dati e strade © OpenStreetMap contributors (ODbL) · SRTM · Cartografia © OpenTopoMap (CC BY-SA 3.0)',32,76+992+29);out.font='11px Arial,sans-serif';out.fillText('openstreetmap.org/copyright · opentopomap.org/about · creativecommons.org/licenses/by-sa/3.0/ · Elaborazione grafica digitale',32,76+992+51);
+  return output;
+ }finally{art.canvas.width=pigment.canvas.width=1;if(film)film.canvas.width=1;}
+}
+function printDensity(blob,type){
+ return blob.arrayBuffer().then(buffer=>{
+  const bytes=new Uint8Array(buffer);
+  if(type==='image/jpeg'){
+   for(let pos=2;pos<bytes.length-16;){
+    if(bytes[pos]!==255)break;const marker=bytes[pos+1];if(marker===218)break;
+    const length=(bytes[pos+2]<<8)|bytes[pos+3];if(length<2)break;
+    if(marker===224&&String.fromCharCode(...bytes.slice(pos+4,pos+9))==='JFIF\0'){bytes[pos+11]=1;bytes[pos+12]=bytes[pos+14]=1;bytes[pos+13]=bytes[pos+15]=44;break;}
+    pos+=length+2;
+   }
+   return new Blob([bytes],{type});
+  }
+  // PNG pHYs: 11811 pixels/metre = 300 dpi. Preserve all other chunks.
+  const chunk=new Uint8Array(21),v=new DataView(chunk.buffer);v.setUint32(0,9);chunk.set([112,72,89,115],4);v.setUint32(8,11811);v.setUint32(12,11811);chunk[16]=1;
+  let crc=0xffffffff;for(const byte of chunk.slice(4,17)){crc^=byte;for(let i=0;i<8;i++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);}v.setUint32(17,(crc^0xffffffff)>>>0);
+  const parts=[bytes.slice(0,33),chunk];for(let pos=33;pos<bytes.length;){const length=new DataView(bytes.buffer).getUint32(pos),end=pos+length+12;const name=String.fromCharCode(...bytes.slice(pos+4,pos+8));if(name!=='pHYs')parts.push(bytes.slice(pos,end));pos=end;}
+  return new Blob(parts,{type});
+ });
+}
+
 byId('export-jpeg').onclick=async()=>{
  if(!cartographyReady)return;
  const button=byId('export-jpeg'),status=byId('export-status');button.disabled=true;status.textContent='Preparo la stampa…';
  try{
-  const output=finalPrintSnapshot();
-  const blob=await new Promise((resolve,reject)=>output.toBlob(value=>value?resolve(value):reject(new Error('JPEG non disponibile')),'image/jpeg',.95));
+  const ratio=Number(byId('export-size').value),type=byId('export-format').value;
+  const output=ratio>DPR?await highResolutionPrint(ratio,status):finalPrintSnapshot();
+  status.textContent='Preparo il file…';
+  let blob=await new Promise((resolve,reject)=>output.toBlob(value=>value?resolve(value):reject(new Error('Immagine non disponibile')),type,.97));
+  if(ratio>DPR)blob=await printDensity(blob,type);output.width=1;
   const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;
-  link.download='Cartografia_PerdersiPerRitrovarsi.jpg';document.body.appendChild(link);link.click();link.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),30000);status.textContent='JPEG pronto.';
- }catch(error){status.textContent='Non riesco a creare il JPEG. Riprova.';}
+  link.download='Cartografia_PerdersiPerRitrovarsi.'+(type==='image/png'?'png':'jpg');document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);status.textContent=ratio>DPR?'Stampa pronta · 4000 × 2865 px · 300 dpi.':'Immagine pronta.';
+ }catch(error){status.textContent='Non riesco a creare il file. Prova la qualità Schermo o riprova.';}
  finally{button.disabled=false;}
 };
 
+byId('project-open').onclick=()=>byId('project-guide').showModal();
+byId('project-guide').addEventListener('click',e=>{if(e.target===byId('project-guide')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
 byId('bleed').onchange=e=>{spread=Number(e.target.value);resetPaper();render();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(playing)setPlaying(false);stopFinale();}else render();});
 render();
